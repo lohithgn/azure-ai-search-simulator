@@ -1,0 +1,390 @@
+@page "/search-explorer"
+@inject SearchSimulatorApiClient ApiClient
+@using System.Text.Json
+@using System.Text.RegularExpressions
+
+<PageTitle>Search explorer - Azure AI Search Simulator</PageTitle>
+
+<div class="page-header">
+    <h1>Search explorer</h1>
+</div>
+
+@if (_loadingIndexes)
+{
+    <div class="loading-container">
+        <FluentProgressRing />
+        <span>Loading indexes...</span>
+    </div>
+}
+else if (!_indexes.Any())
+{
+    <div class="empty-state">
+        <FluentIcon Value="@(new RegularIcons.Size48.Search())" Color="Color.Neutral" />
+        <h3>No indexes found</h3>
+        <p>Create an index first to use the search explorer.</p>
+    </div>
+}
+else
+{
+    @* ── Index Selector ── *@
+    <div style="display: flex; gap: 16px; align-items: flex-end; margin-bottom: 16px;">
+        <div>
+            <FluentLabel Typo="Typography.Body">Index</FluentLabel>
+            <FluentSelect TOption="string"
+                          Items="@_indexNames"
+                          @bind-Value="_selectedIndex"
+                          Width="280px"
+                          OptionValue="@(i => i)"
+                          OptionText="@(i => i)" />
+        </div>
+        <div>
+            <FluentLabel Typo="Typography.Body">API version</FluentLabel>
+            <FluentTextField Value="2024-07-01" ReadOnly="true" Style="width: 180px;" />
+        </div>
+    </div>
+
+    @* ── View Toggle ── *@
+    <FluentTabs @bind-ActiveTabId="_activeTab" Style="margin-bottom: 16px;">
+        <FluentTab Label="Query string" Id="query">
+            <div style="margin-top: 12px;">
+                <FluentLabel Typo="Typography.Body">Search</FluentLabel>
+                <div style="display: flex; gap: 8px; margin-top: 4px;">
+                    <FluentTextField @bind-Value="_searchText" Placeholder="*" Style="flex: 1;" @onkeydown="HandleKeyDown" />
+                    <FluentButton Appearance="Appearance.Accent" OnClick="ExecuteSearchAsync"
+                                  IconStart="@(new RegularIcons.Size16.Search())">Search</FluentButton>
+                    <FluentButton Appearance="Appearance.Outline" OnClick="ResetSearch"
+                                  IconStart="@(new RegularIcons.Size16.Dismiss())">Reset</FluentButton>
+                </div>
+
+                <div style="margin-top: 12px;">
+                    <FluentAccordion>
+                        <FluentAccordionItem Heading="Advanced options">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-top: 8px;">
+                                <div>
+                                    <FluentLabel Typo="Typography.Body">$filter</FluentLabel>
+                                    <FluentTextField @bind-Value="_filter" Placeholder="e.g. rating gt 4" Style="width: 100%;" />
+                                </div>
+                                <div>
+                                    <FluentLabel Typo="Typography.Body">$orderby</FluentLabel>
+                                    <FluentTextField @bind-Value="_orderBy" Placeholder="e.g. name asc" Style="width: 100%;" />
+                                </div>
+                                <div>
+                                    <FluentLabel Typo="Typography.Body">$select</FluentLabel>
+                                    <FluentTextField @bind-Value="_select" Placeholder="e.g. name,description" Style="width: 100%;" />
+                                </div>
+                                <div>
+                                    <FluentLabel Typo="Typography.Body">$top</FluentLabel>
+                                    <FluentNumberField @bind-Value="_top" Min="1" Max="1000" Style="width: 100%;" />
+                                </div>
+                                <div>
+                                    <FluentLabel Typo="Typography.Body">$skip</FluentLabel>
+                                    <FluentNumberField @bind-Value="_skip" Min="0" Style="width: 100%;" />
+                                </div>
+                                <div>
+                                    <FluentLabel Typo="Typography.Body">$count</FluentLabel>
+                                    <FluentCheckbox @bind-Value="_includeCount" Label="Include count" />
+                                </div>
+                                <div>
+                                    <FluentLabel Typo="Typography.Body">$facet</FluentLabel>
+                                    <FluentTextField @bind-Value="_facet" Placeholder="e.g. category" Style="width: 100%;" />
+                                </div>
+                                <div>
+                                    <FluentLabel Typo="Typography.Body">searchMode</FluentLabel>
+                                    <FluentSelect TOption="string"
+                                                  Items="@(new[] { "any", "all" })"
+                                                  @bind-Value="_searchMode"
+                                                  OptionValue="@(s => s)"
+                                                  OptionText="@(s => s)"
+                                                  Width="100%" />
+                                </div>
+                                <div>
+                                    <FluentLabel Typo="Typography.Body">queryType</FluentLabel>
+                                    <FluentSelect TOption="string"
+                                                  Items="@(new[] { "simple", "full" })"
+                                                  @bind-Value="_queryType"
+                                                  OptionValue="@(s => s)"
+                                                  OptionText="@(s => s)"
+                                                  Width="100%" />
+                                </div>
+                            </div>
+                        </FluentAccordionItem>
+                    </FluentAccordion>
+                </div>
+            </div>
+        </FluentTab>
+
+        <FluentTab Label="JSON view" Id="json">
+            <div style="margin-top: 12px;">
+                <FluentLabel Typo="Typography.Body">Request body (JSON)</FluentLabel>
+                <FluentTextArea @bind-Value="_rawJson" Rows="12" Style="width: 100%; font-family: Consolas, monospace; font-size: 13px;" />
+                <div style="margin-top: 8px; display: flex; gap: 8px;">
+                    <FluentButton Appearance="Appearance.Accent" OnClick="ExecuteRawSearchAsync"
+                                  IconStart="@(new RegularIcons.Size16.Search())">Search</FluentButton>
+                </div>
+            </div>
+        </FluentTab>
+    </FluentTabs>
+
+    @* ── Results ── *@
+    @if (_searching)
+    {
+        <div class="loading-container">
+            <FluentProgressRing />
+            <span>Searching...</span>
+        </div>
+    }
+    else if (_searchResult != null)
+    {
+        <div class="results-panel">
+            <div class="results-header">
+                <span>
+                    Results
+                    @if (_resultCount.HasValue)
+                    {
+                        <span> — @_resultCount.Value total</span>
+                    }
+                </span>
+                <span style="font-size: 12px; color: #a19f9d;">@_resultTime</span>
+            </div>
+            <div class="idx-json-container" style="max-height: 600px;">
+                <div class="idx-json-lines">
+                    @foreach (var line in _searchResultLines)
+                    {
+                        <div class="idx-json-line">
+                            <span class="idx-line-num">@line.Number</span>
+                            <span class="idx-line-content">@((MarkupString)line.Html)</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+}
+
+@if (!string.IsNullOrEmpty(_error))
+{
+    <FluentMessageBar Intent="MessageIntent.Error" Title="Error">
+        @_error
+    </FluentMessageBar>
+}
+
+@code {
+    private bool _loadingIndexes = true;
+    private bool _searching;
+    private string? _error;
+    private List<SearchIndexModel> _indexes = [];
+    private List<string> _indexNames = [];
+    private string? _selectedIndex;
+    private string _activeTab = "query";
+
+    // Query string mode
+    private string _searchText = "*";
+    private string? _filter;
+    private string? _orderBy;
+    private string? _select;
+    private int _top = 50;
+    private int _skip = 0;
+    private bool _includeCount = true;
+    private string? _facet;
+    private string _searchMode = "any";
+    private string _queryType = "simple";
+
+    // JSON mode
+    private string _rawJson = "{\n  \"search\": \"*\",\n  \"count\": true\n}";
+
+    // Results
+    private string? _searchResult;
+    private List<JsonLine> _searchResultLines = [];
+    private long? _resultCount;
+    private string? _resultTime;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _indexes = await ApiClient.ListIndexesAsync();
+            _indexNames = _indexes.Select(i => i.Name).ToList();
+            _selectedIndex = _indexNames.FirstOrDefault();
+        }
+        catch (Exception ex)
+        {
+            _error = $"Failed to load indexes: {ex.Message}";
+        }
+        finally
+        {
+            _loadingIndexes = false;
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await ExecuteSearchAsync();
+        }
+    }
+
+    private async Task ExecuteSearchAsync()
+    {
+        if (string.IsNullOrEmpty(_selectedIndex)) return;
+
+        _searching = true;
+        _error = null;
+        StateHasChanged();
+
+        try
+        {
+            var body = new Dictionary<string, object>
+            {
+                ["search"] = string.IsNullOrWhiteSpace(_searchText) ? "*" : _searchText,
+                ["count"] = _includeCount,
+                ["top"] = _top,
+                ["skip"] = _skip,
+                ["searchMode"] = _searchMode,
+                ["queryType"] = _queryType
+            };
+
+            if (!string.IsNullOrWhiteSpace(_filter)) body["filter"] = _filter;
+            if (!string.IsNullOrWhiteSpace(_orderBy)) body["orderby"] = _orderBy;
+            if (!string.IsNullOrWhiteSpace(_select)) body["select"] = _select;
+            if (!string.IsNullOrWhiteSpace(_facet)) body["facets"] = new[] { _facet };
+
+            var json = JsonSerializer.Serialize(body, new JsonSerializerOptions { WriteIndented = true });
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            var result = await ApiClient.SearchDocumentsAsync(_selectedIndex, json);
+            sw.Stop();
+
+            _resultTime = $"{sw.ElapsedMilliseconds} ms";
+            FormatResult(result);
+        }
+        catch (Exception ex)
+        {
+            _error = $"Search failed: {ex.Message}";
+        }
+        finally
+        {
+            _searching = false;
+        }
+    }
+
+    private async Task ExecuteRawSearchAsync()
+    {
+        if (string.IsNullOrEmpty(_selectedIndex) || string.IsNullOrWhiteSpace(_rawJson)) return;
+
+        _searching = true;
+        _error = null;
+        StateHasChanged();
+
+        try
+        {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            var result = await ApiClient.SearchDocumentsAsync(_selectedIndex, _rawJson);
+            sw.Stop();
+
+            _resultTime = $"{sw.ElapsedMilliseconds} ms";
+            FormatResult(result);
+        }
+        catch (Exception ex)
+        {
+            _error = $"Search failed: {ex.Message}";
+        }
+        finally
+        {
+            _searching = false;
+        }
+    }
+
+    private void FormatResult(string result)
+    {
+        try
+        {
+            var doc = JsonDocument.Parse(result);
+            _searchResult = JsonSerializer.Serialize(doc, new JsonSerializerOptions { WriteIndented = true });
+
+            if (doc.RootElement.TryGetProperty("@odata.count", out var countEl))
+            {
+                _resultCount = countEl.GetInt64();
+            }
+            else
+            {
+                _resultCount = null;
+            }
+        }
+        catch
+        {
+            _searchResult = result;
+            _resultCount = null;
+        }
+
+        _searchResultLines = BuildHighlightedLines(_searchResult);
+    }
+
+    private static List<JsonLine> BuildHighlightedLines(string? json)
+    {
+        var result = new List<JsonLine>();
+        if (string.IsNullOrEmpty(json)) return result;
+
+        var lines = json.Split('\n');
+        for (int i = 0; i < lines.Length; i++)
+        {
+            result.Add(new JsonLine { Number = i + 1, Html = SyntaxHighlight(lines[i]) });
+        }
+        return result;
+    }
+
+    private static string SyntaxHighlight(string line)
+    {
+        var escaped = line
+            .Replace("&", "&amp;")
+            .Replace("<", "&lt;")
+            .Replace(">", "&gt;");
+
+        escaped = Regex.Replace(escaped,
+            @"(&quot;|"")(.*?)(&quot;|"")\s*:",
+            "<span class=\"json-key\">&quot;$2&quot;</span>:");
+
+        escaped = Regex.Replace(escaped,
+            @":\s*(&quot;|"")(.*?)(&quot;|"")",
+            ": <span class=\"json-string\">&quot;$2&quot;</span>");
+
+        escaped = Regex.Replace(escaped,
+            @"^\s*(&quot;|"")(.*?)(&quot;|"")\s*,?\s*$",
+            m => m.Value.Contains("json-key") || m.Value.Contains("json-string")
+                ? m.Value
+                : $"<span class=\"json-string\">{m.Value}</span>");
+
+        escaped = Regex.Replace(escaped,
+            @":\s*(\d+\.?\d*)",
+            ": <span class=\"json-number\">$1</span>");
+
+        escaped = Regex.Replace(escaped,
+            @":\s*(true|false|null)",
+            ": <span class=\"json-bool\">$1</span>");
+
+        return escaped;
+    }
+
+    private void ResetSearch()
+    {
+        _searchText = "*";
+        _filter = null;
+        _orderBy = null;
+        _select = null;
+        _top = 50;
+        _skip = 0;
+        _includeCount = true;
+        _facet = null;
+        _searchMode = "any";
+        _queryType = "simple";
+        _searchResult = null;
+        _searchResultLines.Clear();
+        _resultCount = null;
+        _resultTime = null;
+    }
+
+    private class JsonLine
+    {
+        public int Number { get; set; }
+        public string Html { get; set; } = string.Empty;
+    }
+}

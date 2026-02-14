@@ -1,0 +1,42 @@
+﻿<div class="nav-container">
+    <FluentNavMenu Width="240" Collapsible="false" Title="Search Service">
+        <FluentNavLink Href="/" Match="NavLinkMatch.All"
+                       Icon="@(new RegularIcons.Size20.Info())"
+                       IconColor="Color.Neutral">Overview</FluentNavLink>
+
+        <FluentNavLink Href="/search-explorer"
+                       Icon="@(new RegularIcons.Size20.Search())"
+                       IconColor="Color.Neutral">Search explorer</FluentNavLink>
+
+        <FluentNavGroup Title="Search management"
+                        Icon="@(new RegularIcons.Size20.DocumentSearch())"
+                        IconColor="Color.Neutral"
+                        Expanded="true">
+            <FluentNavLink Href="/indexes"
+                           Icon="@(new RegularIcons.Size20.TableSimple())"
+                           IconColor="Color.Neutral">Indexes</FluentNavLink>
+
+            <FluentNavLink Href="/indexers"
+                           Icon="@(new RegularIcons.Size20.ArrowSync())"
+                           IconColor="Color.Neutral">Indexers</FluentNavLink>
+
+            <FluentNavLink Href="/data-sources"
+                           Icon="@(new RegularIcons.Size20.Database())"
+                           IconColor="Color.Neutral">Data sources</FluentNavLink>
+
+            <FluentNavLink Href="/skillsets"
+                           Icon="@(new RegularIcons.Size20.Lightbulb())"
+                           IconColor="Color.Neutral">Skillsets</FluentNavLink>
+        </FluentNavGroup>
+
+        <FluentNavGroup Title="Settings"
+                        Icon="@(new RegularIcons.Size20.Settings())"
+                        IconColor="Color.Neutral"
+                        Expanded="true">
+            <FluentNavLink Href="/keys"
+                           Icon="@(new RegularIcons.Size20.Key())"
+                           IconColor="Color.Neutral">Keys</FluentNavLink>
+        </FluentNavGroup>
+    </FluentNavMenu>
+</div>
+

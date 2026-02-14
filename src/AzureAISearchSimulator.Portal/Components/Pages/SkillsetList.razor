@@ -1,0 +1,172 @@
+@page "/skillsets"
+@inject SearchSimulatorApiClient ApiClient
+@inject NavigationManager Navigation
+
+<PageTitle>Skillsets - Azure AI Search Simulator</PageTitle>
+
+<div class="page-header">
+    <h1>Skillsets</h1>
+    <div class="page-toolbar">
+        <FluentButton Appearance="Appearance.Accent" OnClick="@(() => _showCreate = true)"
+                      IconStart="@(new RegularIcons.Size16.Add())">Add skillset</FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="@LoadDataAsync"
+                      IconStart="@(new RegularIcons.Size16.ArrowClockwise())">Refresh</FluentButton>
+    </div>
+</div>
+
+@if (_loading)
+{
+    <div class="loading-container">
+        <FluentProgressRing />
+        <span>Loading skillsets...</span>
+    </div>
+}
+else if (!_skillsets.Any())
+{
+    <div class="empty-state">
+        <FluentIcon Value="@(new RegularIcons.Size48.Lightbulb())" Color="Color.Neutral" />
+        <h3>No skillsets</h3>
+        <p>No skillsets have been created yet. Click "Add skillset" to create one.</p>
+    </div>
+}
+else
+{
+    <FluentDataGrid Items="@_skillsets.AsQueryable()" GridTemplateColumns="1fr 1fr 100px 60px" Style="width:100%;">
+        <TemplateColumn Title="Name">
+            <FluentAnchor Href="@($"/skillsets/{context.Name}")" Appearance="Appearance.Hypertext">@context.Name</FluentAnchor>
+        </TemplateColumn>
+        <PropertyColumn Property="@(s => s.Description ?? "—")" Title="Description" />
+        <PropertyColumn Property="@(s => s.Skills.Count)" Title="Skills" Align="Align.End" />
+        <TemplateColumn Title="" Align="Align.Center">
+            <FluentButton Appearance="Appearance.Stealth" Title="Delete"
+                          OnClick="@(() => ConfirmDelete(context.Name))"
+                          IconStart="@(new RegularIcons.Size16.Delete())" />
+        </TemplateColumn>
+    </FluentDataGrid>
+}
+
+@* ── Create Dialog ── *@
+<FluentDialog @bind-Hidden="@_hideCreate" Modal="true" TrapFocus="true" PreventScroll="true">
+    <FluentDialogHeader>Add skillset (JSON)</FluentDialogHeader>
+    <FluentDialogBody>
+        <FluentTextArea @bind-Value="_createJson" Rows="15"
+                        Style="width: 100%; font-family: Consolas, monospace; font-size: 13px;"
+                        Placeholder='{ "name": "my-skillset", "skills": [...] }' />
+        @if (!string.IsNullOrEmpty(_createError))
+        {
+            <FluentMessageBar Intent="MessageIntent.Error" Style="margin-top: 8px;">@_createError</FluentMessageBar>
+        }
+    </FluentDialogBody>
+    <FluentDialogFooter>
+        <FluentButton Appearance="Appearance.Accent" OnClick="CreateAsync">Create</FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="@(() => _showCreate = false)">Cancel</FluentButton>
+    </FluentDialogFooter>
+</FluentDialog>
+
+@* ── Delete Confirmation ── *@
+<FluentDialog @bind-Hidden="@_hideDelete" Modal="true" TrapFocus="true">
+    <FluentDialogHeader>Delete skillset</FluentDialogHeader>
+    <FluentDialogBody>
+        <p>Are you sure you want to delete skillset <strong>@_deleteTarget</strong>?</p>
+    </FluentDialogBody>
+    <FluentDialogFooter>
+        <FluentButton Appearance="Appearance.Accent" OnClick="DeleteAsync"
+                      style="background: #a80000; border-color: #a80000;">Delete</FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="@(() => _showDelete = false)">Cancel</FluentButton>
+    </FluentDialogFooter>
+</FluentDialog>
+
+@if (!string.IsNullOrEmpty(_error))
+{
+    <FluentMessageBar Intent="MessageIntent.Error" Title="Error">@_error</FluentMessageBar>
+}
+
+@code {
+    private bool _loading = true;
+    private string? _error;
+    private List<SkillsetModel> _skillsets = [];
+
+    private bool _showCreate;
+    private bool _hideCreate { get => !_showCreate; set => _showCreate = !value; }
+    private string _createJson = "";
+    private string? _createError;
+
+    private bool _showDelete;
+    private bool _hideDelete { get => !_showDelete; set => _showDelete = !value; }
+    private string? _deleteTarget;
+
+    protected override async Task OnInitializedAsync() => await LoadDataAsync();
+
+    private async Task LoadDataAsync()
+    {
+        _loading = true;
+        _error = null;
+        StateHasChanged();
+
+        try
+        {
+            _skillsets = await ApiClient.ListSkillsetsAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = $"Failed to load skillsets: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task CreateAsync()
+    {
+        _createError = null;
+        if (string.IsNullOrWhiteSpace(_createJson))
+        {
+            _createError = "Please enter the skillset JSON definition.";
+            return;
+        }
+
+        try
+        {
+            var success = await ApiClient.CreateSkillsetAsync(_createJson);
+            if (success)
+            {
+                _showCreate = false;
+                _createJson = "";
+                await LoadDataAsync();
+            }
+            else
+            {
+                _createError = "Failed to create skillset. Check the JSON definition.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _createError = ex.Message;
+        }
+    }
+
+    private void ConfirmDelete(string name)
+    {
+        _deleteTarget = name;
+        _showDelete = true;
+    }
+
+    private async Task DeleteAsync()
+    {
+        if (string.IsNullOrEmpty(_deleteTarget)) return;
+
+        try
+        {
+            await ApiClient.DeleteSkillsetAsync(_deleteTarget);
+            _showDelete = false;
+            _deleteTarget = null;
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = $"Failed to delete: {ex.Message}";
+            _showDelete = false;
+        }
+    }
+}

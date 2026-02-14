@@ -1,0 +1,288 @@
+﻿@page "/"
+@inject SearchSimulatorApiClient ApiClient
+@inject NavigationManager Navigation
+
+<PageTitle>Overview - Azure AI Search Simulator</PageTitle>
+
+@* ── Service Name Header (like Azure portal) ── *@
+<div class="svc-header">
+    <div class="svc-header-icon">
+        <FluentIcon Value="@(new RegularIcons.Size24.Search())" Color="Color.Accent" />
+    </div>
+    <div>
+        <h1 class="svc-header-name">local-search-simulator</h1>
+        <span class="svc-header-type">Search service</span>
+    </div>
+    <div class="svc-header-actions">
+        <FluentButton Appearance="Appearance.Stealth" OnClick="@LoadDataAsync"
+                      IconStart="@(new RegularIcons.Size16.ArrowClockwise())" Class="cmd-btn">Refresh</FluentButton>
+    </div>
+</div>
+
+@if (_loading)
+{
+    <div class="loading-container">
+        <FluentProgressRing />
+        <span>Loading...</span>
+    </div>
+}
+else
+{
+    @* ── Essentials Panel (two-column like Azure portal) ── *@
+    <div class="essentials-panel">
+        <div class="essentials-grid-portal">
+            <div class="essentials-col">
+                <div class="essentials-row">
+                    <span class="essentials-label">Status</span>
+                    <span class="essentials-value">
+                        <span style="color: #107c10;">●</span> Running
+                    </span>
+                </div>
+                <div class="essentials-row">
+                    <span class="essentials-label">Url</span>
+                    <span class="essentials-value essentials-link">@ApiClient.BaseUrl</span>
+                </div>
+                <div class="essentials-row">
+                    <span class="essentials-label">API version</span>
+                    <span class="essentials-value">2024-07-01</span>
+                </div>
+            </div>
+            <div class="essentials-col">
+                <div class="essentials-row">
+                    <span class="essentials-label">Tier</span>
+                    <span class="essentials-value">Simulator (Local)</span>
+                </div>
+                <div class="essentials-row">
+                    <span class="essentials-label">Replicas</span>
+                    <span class="essentials-value essentials-link">1</span>
+                </div>
+                <div class="essentials-row">
+                    <span class="essentials-label">Partitions</span>
+                    <span class="essentials-value essentials-link">1</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ── Tabs: Get started / Properties / Usage / Monitoring ── *@
+    <FluentTabs @bind-ActiveTabId="_activeTab" Style="margin-top: 4px;">
+
+        @* ── Get started Tab ── *@
+        <FluentTab Label="Get started" Id="getstarted">
+            <div style="margin-top: 20px; color: #323130;">
+                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">Welcome to Azure AI Search Simulator</h3>
+                <p style="color: #605e5c; margin-bottom: 16px;">
+                    This local simulator replicates the Azure AI Search REST API. Use the navigation on the left to manage your indexes, indexers, data sources, and skillsets.
+                </p>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <FluentButton Appearance="Appearance.Outline" OnClick="@(() => Navigation.NavigateTo("/indexes"))"
+                                  IconStart="@(new RegularIcons.Size16.TextBulletListSquare())">View indexes</FluentButton>
+                    <FluentButton Appearance="Appearance.Outline" OnClick="@(() => Navigation.NavigateTo("/search-explorer"))"
+                                  IconStart="@(new RegularIcons.Size16.Search())">Open search explorer</FluentButton>
+                    <FluentButton Appearance="Appearance.Outline" OnClick="@(() => Navigation.NavigateTo("/keys"))"
+                                  IconStart="@(new RegularIcons.Size16.Key())">Manage API keys</FluentButton>
+                </div>
+            </div>
+        </FluentTab>
+
+        @* ── Properties Tab ── *@
+        <FluentTab Label="Properties" Id="properties">
+            <div style="margin-top: 20px;">
+                <div class="props-grid">
+                    <div class="props-row">
+                        <span class="props-label">Name</span>
+                        <span class="props-value">local-search-simulator</span>
+                    </div>
+                    <div class="props-row">
+                        <span class="props-label">Url</span>
+                        <span class="props-value" style="font-family: Consolas, monospace;">@ApiClient.BaseUrl</span>
+                    </div>
+                    <div class="props-row">
+                        <span class="props-label">API version</span>
+                        <span class="props-value">2024-07-01</span>
+                    </div>
+                    <div class="props-row">
+                        <span class="props-label">Status</span>
+                        <span class="props-value"><span style="color: #107c10;">●</span> Running</span>
+                    </div>
+                    <div class="props-row">
+                        <span class="props-label">Tier</span>
+                        <span class="props-value">Simulator (Local)</span>
+                    </div>
+                </div>
+            </div>
+        </FluentTab>
+
+        @* ── Usage Tab (matching Azure portal) ── *@
+        <FluentTab Label="Usage" Id="usage">
+            <div class="usage-grid">
+                @* Total storage *@
+                <div class="usage-card">
+                    <div class="usage-card-title">Total storage</div>
+                    <div class="usage-card-body">
+                        <div class="usage-card-section">
+                            <span class="usage-card-label">Current</span>
+                            <span class="usage-card-value">@FormatBytes(_totalStorage)</span>
+                        </div>
+                    </div>
+                    <div class="usage-card-footer">
+                        <a class="usage-card-link" @onclick="@(() => Navigation.NavigateTo("/indexes"))" @onclick:preventDefault>View indexes</a>
+                    </div>
+                </div>
+
+                @* Vector index usage *@
+                <div class="usage-card">
+                    <div class="usage-card-title">Vector index quota usage</div>
+                    <div class="usage-card-body">
+                        <div class="usage-card-section">
+                            <span class="usage-card-label">Current</span>
+                            <span class="usage-card-value">@FormatBytes(_totalVectorStorage)</span>
+                        </div>
+                    </div>
+                    <div class="usage-card-footer">
+                        <a class="usage-card-link" @onclick="@(() => Navigation.NavigateTo("/indexes"))" @onclick:preventDefault>View indexes</a>
+                    </div>
+                </div>
+
+                @* Indexes *@
+                <div class="usage-card">
+                    <div class="usage-card-title">Indexes</div>
+                    <div class="usage-card-body">
+                        <div class="usage-card-section">
+                            <span class="usage-card-label">Current</span>
+                            <span class="usage-card-value">@_indexes.Count</span>
+                        </div>
+                    </div>
+                    <div class="usage-card-footer">
+                        <a class="usage-card-link" @onclick="@(() => Navigation.NavigateTo("/indexes"))" @onclick:preventDefault>View indexes</a>
+                    </div>
+                </div>
+
+                @* Indexers *@
+                <div class="usage-card">
+                    <div class="usage-card-title">Indexers</div>
+                    <div class="usage-card-body">
+                        <div class="usage-card-section">
+                            <span class="usage-card-label">Current</span>
+                            <span class="usage-card-value">@_indexers.Count</span>
+                        </div>
+                    </div>
+                    <div class="usage-card-footer">
+                        <a class="usage-card-link" @onclick="@(() => Navigation.NavigateTo("/indexers"))" @onclick:preventDefault>View indexers</a>
+                    </div>
+                </div>
+
+                @* Data sources *@
+                <div class="usage-card">
+                    <div class="usage-card-title">Data sources</div>
+                    <div class="usage-card-body">
+                        <div class="usage-card-section">
+                            <span class="usage-card-label">Current</span>
+                            <span class="usage-card-value">@_dataSources.Count</span>
+                        </div>
+                    </div>
+                    <div class="usage-card-footer">
+                        <a class="usage-card-link" @onclick="@(() => Navigation.NavigateTo("/data-sources"))" @onclick:preventDefault>View data sources</a>
+                    </div>
+                </div>
+
+                @* Skillsets *@
+                <div class="usage-card">
+                    <div class="usage-card-title">Skillsets</div>
+                    <div class="usage-card-body">
+                        <div class="usage-card-section">
+                            <span class="usage-card-label">Current</span>
+                            <span class="usage-card-value">@_skillsets.Count</span>
+                        </div>
+                    </div>
+                    <div class="usage-card-footer">
+                        <a class="usage-card-link" @onclick="@(() => Navigation.NavigateTo("/skillsets"))" @onclick:preventDefault>View skillsets</a>
+                    </div>
+                </div>
+            </div>
+        </FluentTab>
+
+        @* ── Monitoring Tab ── *@
+        <FluentTab Label="Monitoring" Id="monitoring">
+            <div style="margin-top: 20px; color: #605e5c;">
+                <p>Monitoring is not available in the local simulator.</p>
+            </div>
+        </FluentTab>
+    </FluentTabs>
+}
+
+@if (!string.IsNullOrEmpty(_error))
+{
+    <FluentMessageBar Intent="MessageIntent.Error" Title="Error">
+        @_error
+    </FluentMessageBar>
+}
+
+@code {
+    private bool _loading = true;
+    private string? _error;
+    private string _activeTab = "usage";
+    private List<SearchIndexModel> _indexes = [];
+    private List<IndexerModel> _indexers = [];
+    private List<DataSourceModel> _dataSources = [];
+    private List<SkillsetModel> _skillsets = [];
+    private long _totalDocuments;
+    private long _totalStorage;
+    private long _totalVectorStorage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        _loading = true;
+        _error = null;
+        StateHasChanged();
+
+        try
+        {
+            var indexTask = ApiClient.ListIndexesAsync();
+            var indexerTask = ApiClient.ListIndexersAsync();
+            var dsTask = ApiClient.ListDataSourcesAsync();
+            var ssTask = ApiClient.ListSkillsetsAsync();
+
+            await Task.WhenAll(indexTask, indexerTask, dsTask, ssTask);
+
+            _indexes = indexTask.Result;
+            _indexers = indexerTask.Result;
+            _dataSources = dsTask.Result;
+            _skillsets = ssTask.Result;
+
+            // Gather stats for each index
+            _totalDocuments = 0;
+            _totalStorage = 0;
+            _totalVectorStorage = 0;
+
+            foreach (var idx in _indexes)
+            {
+                var stats = await ApiClient.GetIndexStatsAsync(idx.Name);
+                _totalDocuments += stats?.DocumentCount ?? 0;
+                _totalStorage += stats?.StorageSize ?? 0;
+                _totalVectorStorage += stats?.VectorIndexSize ?? 0;
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = $"Failed to load data: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private string FormatBytes(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F2} KB";
+        if (bytes < 1024 * 1024 * 1024) return $"{bytes / (1024.0 * 1024.0):F2} MB";
+        return $"{bytes / (1024.0 * 1024.0 * 1024.0):F2} GB";
+    }
+}

@@ -1,0 +1,705 @@
+/* ── Azure Portal Base Styles ── */
+html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    color: #323130;
+    background-color: #f3f2f1;
+    height: 100%;
+    overflow: hidden;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+a {
+    color: #0078d4;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #106ebe;
+    text-decoration: underline;
+}
+
+h1, h2, h3, h4 {
+    font-weight: 600;
+    color: #323130;
+    margin-top: 0;
+}
+
+h1 { font-size: 20px; }
+h2 { font-size: 16px; }
+h3 { font-size: 14px; font-weight: 600; }
+
+/* ── Azure Portal Page Styles ── */
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #edebe9;
+}
+
+.page-header h1 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.page-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 8px 0;
+}
+
+/* ── Essentials Panel (like Azure portal Overview) ── */
+.essentials-panel {
+    background-color: #faf9f8;
+    border: 1px solid #edebe9;
+    border-radius: 2px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+}
+
+.essentials-grid-portal {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 60px;
+}
+
+.essentials-col {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.essentials-row {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+}
+
+.essentials-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 40px;
+}
+
+.essentials-item {
+    display: flex;
+    flex-direction: column;
+    padding: 4px 0;
+}
+
+.essentials-label {
+    font-size: 13px;
+    color: #605e5c;
+    font-weight: 400;
+    min-width: 110px;
+}
+
+.essentials-value {
+    font-size: 13px;
+    color: #323130;
+    font-weight: 400;
+}
+
+.essentials-link {
+    color: #0078d4;
+}
+
+/* ── Service Header (Azure portal style) ── */
+.svc-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #edebe9;
+}
+
+.svc-header-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+}
+
+.svc-header-name {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #323130;
+    line-height: 1.2;
+}
+
+.svc-header-type {
+    font-size: 13px;
+    color: #605e5c;
+}
+
+.svc-header-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 4px;
+}
+
+/* ── Properties Grid ── */
+.props-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.props-row {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+}
+
+.props-label {
+    font-size: 13px;
+    color: #605e5c;
+    min-width: 120px;
+}
+
+.props-value {
+    font-size: 13px;
+    color: #323130;
+}
+
+/* ── Usage Cards (Azure portal style) ── */
+.usage-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.usage-card {
+    border: 1px solid #edebe9;
+    border-radius: 2px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    min-height: 140px;
+}
+
+.usage-card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #323130;
+    padding: 16px 16px 0 16px;
+}
+
+.usage-card-body {
+    padding: 16px;
+    flex: 1;
+}
+
+.usage-card-section {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.usage-card-label {
+    font-size: 12px;
+    color: #0078d4;
+    font-weight: 400;
+}
+
+.usage-card-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #323130;
+}
+
+.usage-card-footer {
+    padding: 8px 16px 12px 16px;
+}
+
+.usage-card-link {
+    font-size: 13px;
+    color: #0078d4;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.usage-card-link:hover {
+    text-decoration: underline;
+}
+
+/* ── Card Grid ── */
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+/* ── Stats Row ── */
+.stats-row {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: #faf9f8;
+    border: 1px solid #edebe9;
+    border-radius: 2px;
+    padding: 16px 20px;
+    min-width: 180px;
+}
+
+.stat-value {
+    font-size: 28px;
+    font-weight: 600;
+    color: #0078d4;
+    line-height: 1.2;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #605e5c;
+    margin-top: 4px;
+}
+
+/* ── JSON Viewer ── */
+.json-viewer {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+    font-size: 13px;
+    padding: 16px;
+    border-radius: 2px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 500px;
+    border: 1px solid #3c3c3c;
+}
+
+/* ── Detail Page Sections ── */
+.detail-section {
+    margin-bottom: 24px;
+}
+
+.detail-section h2 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #323130;
+}
+
+.detail-row {
+    display: flex;
+    padding: 8px 0;
+    border-bottom: 1px solid #f3f2f1;
+}
+
+.detail-label {
+    width: 200px;
+    min-width: 200px;
+    font-size: 13px;
+    color: #605e5c;
+}
+
+.detail-value {
+    font-size: 13px;
+    color: #323130;
+}
+
+/* ── Status Badges ── */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 8px;
+    border-radius: 2px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-success {
+    background-color: #dff6dd;
+    color: #107c10;
+}
+
+.status-error {
+    background-color: #fde7e9;
+    color: #a80000;
+}
+
+.status-warning {
+    background-color: #fff4ce;
+    color: #797673;
+}
+
+.status-info {
+    background-color: #f0f6ff;
+    color: #0078d4;
+}
+
+/* ── Tab-style areas ── */
+.tab-content {
+    padding-top: 16px;
+}
+
+/* ── Empty State ── */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #605e5c;
+}
+
+.empty-state-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    color: #a19f9d;
+}
+
+.empty-state h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #323130;
+    margin-bottom: 8px;
+}
+
+.empty-state p {
+    font-size: 13px;
+    color: #605e5c;
+}
+
+/* ── Loading ── */
+.loading-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+    color: #605e5c;
+    gap: 12px;
+}
+
+/* ── Error boundary ── */
+.blazor-error-boundary {
+    background: #fde7e9;
+    padding: 1rem 1rem 1rem 1rem;
+    color: #a80000;
+    border: 1px solid #a80000;
+    border-radius: 2px;
+}
+
+.blazor-error-boundary::after {
+    content: "An error has occurred.";
+}
+
+/* ── Copy button style ── */
+.copy-btn {
+    cursor: pointer;
+    padding: 2px 6px;
+    border: 1px solid #8a8886;
+    border-radius: 2px;
+    background: transparent;
+    color: #323130;
+    font-size: 12px;
+}
+
+.copy-btn:hover {
+    background: #f3f2f1;
+}
+
+/* ── Key display ── */
+.key-value {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 13px;
+    background: #faf9f8;
+    padding: 4px 8px;
+    border: 1px solid #edebe9;
+    border-radius: 2px;
+}
+
+/* ── Search Explorer ── */
+.search-input-area {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    margin-bottom: 16px;
+}
+
+.results-panel {
+    border: 1px solid #edebe9;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.results-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: #faf9f8;
+    border-bottom: 1px solid #edebe9;
+    font-size: 13px;
+    color: #605e5c;
+}
+
+/* ── Index Detail Page (Azure Portal Match) ── */
+
+.idx-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.idx-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #323130;
+    margin: 0;
+}
+
+.idx-ellipsis {
+    font-size: 18px;
+    color: #605e5c;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 2px;
+}
+
+.idx-ellipsis:hover {
+    background: #f3f2f1;
+}
+
+/* Command bar */
+.idx-commandbar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 4px 0;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #edebe9;
+}
+
+.cmd-btn {
+    font-size: 13px !important;
+    color: #323130 !important;
+    padding: 4px 8px !important;
+    min-height: 32px !important;
+}
+
+.cmd-btn:hover {
+    background: #f3f2f1 !important;
+}
+
+.cmd-divider {
+    width: 1px;
+    height: 20px;
+    background: #edebe9;
+    margin: 0 4px;
+}
+
+/* Stats bar */
+.idx-stats-bar {
+    display: flex;
+    gap: 40px;
+    padding: 12px 0 16px 0;
+    border-bottom: 1px solid #edebe9;
+    margin-bottom: 0;
+}
+
+.idx-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.idx-stat-label {
+    font-size: 12px;
+    color: #605e5c;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.idx-stat-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: #323130;
+    line-height: 1.3;
+}
+
+/* Search explorer tab */
+.idx-search-tab {
+    padding-top: 12px;
+}
+
+.idx-search-controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.idx-search-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.idx-search-input-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    border: 1px solid #8a8886;
+    border-radius: 2px;
+    background: #fff;
+    padding: 0 8px;
+    height: 32px;
+}
+
+.idx-search-input-wrapper:focus-within {
+    border-color: #0078d4;
+    outline: none;
+}
+
+.idx-search-icon {
+    flex-shrink: 0;
+    margin-right: 6px;
+    color: #605e5c;
+}
+
+.idx-search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    font-family: inherit;
+    background: transparent;
+    height: 100%;
+    color: #323130;
+}
+
+.idx-search-clear {
+    border: none;
+    background: transparent;
+    color: #605e5c;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 4px;
+    line-height: 1;
+}
+
+.idx-search-clear:hover {
+    color: #323130;
+}
+
+/* Query options */
+.idx-query-options {
+    background: #faf9f8;
+    border: 1px solid #edebe9;
+    border-radius: 2px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.idx-qopt-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.idx-qopt-label {
+    display: block;
+    font-size: 12px;
+    color: #605e5c;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+/* Results area */
+.idx-results {
+    margin-top: 4px;
+}
+
+.idx-results-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #323130;
+    margin-bottom: 6px;
+}
+
+/* Syntax-highlighted JSON viewer with line numbers */
+.idx-json-container {
+    background: #fff;
+    border: 1px solid #edebe9;
+    border-radius: 2px;
+    overflow: auto;
+    max-height: 600px;
+    font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.idx-json-lines {
+    display: table;
+    width: 100%;
+}
+
+.idx-json-line {
+    display: table-row;
+}
+
+.idx-json-line:hover {
+    background: #f3f2f1;
+}
+
+.idx-line-num {
+    display: table-cell;
+    width: 48px;
+    min-width: 48px;
+    padding: 0 12px 0 8px;
+    text-align: right;
+    color: #a19f9d;
+    user-select: none;
+    background: #faf9f8;
+    border-right: 1px solid #edebe9;
+    font-size: 12px;
+    vertical-align: top;
+}
+
+.idx-line-content {
+    display: table-cell;
+    padding: 0 12px;
+    white-space: pre;
+    color: #323130;
+}
+
+/* JSON syntax colors (light theme, matching Azure portal) */
+.json-key {
+    color: #881280;
+}
+
+.json-string {
+    color: #0451a5;
+}
+
+.json-number {
+    color: #098658;
+}
+
+.json-bool {
+    color: #0000ff;
+}

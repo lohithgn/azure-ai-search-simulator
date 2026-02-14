@@ -1,0 +1,33 @@
+/* Azure-style nav menu */
+.nav-container {
+    height: 100%;
+    padding-top: 8px;
+}
+
+.nav-container ::deep .fluent-nav-menu {
+    background-color: transparent;
+}
+
+.nav-container ::deep .fluent-nav-link {
+    font-size: 13px;
+    color: #323130;
+}
+
+.nav-container ::deep .fluent-nav-link:hover {
+    background-color: #edebe9;
+}
+
+.nav-container ::deep .fluent-nav-link.active {
+    background-color: #e1dfdd;
+    color: #0078d4;
+    font-weight: 600;
+}
+
+.nav-container ::deep .fluent-nav-group-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #605e5c;
+    letter-spacing: 0.5px;
+    padding: 16px 12px 4px 12px;
+}

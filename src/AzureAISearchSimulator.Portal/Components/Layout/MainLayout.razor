@@ -1,0 +1,45 @@
+﻿@inherits LayoutComponentBase
+@inject SearchSimulatorApiClient ApiClient
+
+<div class="azure-portal">
+    @* ── Top Bar (Azure-style dark header) ── *@
+    <header class="azure-top-bar">
+        <div class="top-bar-left">
+            <FluentIcon Value="@(new RegularIcons.Size20.Search())" Color="Color.Custom" CustomColor="#ffffff" />
+            <span class="service-name">Azure AI Search Simulator</span>
+        </div>
+        <div class="top-bar-center">
+            <span class="service-url">@ApiClient.BaseUrl</span>
+        </div>
+        <div class="top-bar-right">
+            <FluentIcon Value="@(new RegularIcons.Size20.Settings())" Color="Color.Custom" CustomColor="#ffffff" />
+        </div>
+    </header>
+
+    @* ── Breadcrumb bar ── *@
+    <div class="azure-breadcrumb-bar">
+        <FluentIcon Value="@(new RegularIcons.Size16.Home())" Color="Color.Accent" />
+        <span class="breadcrumb-sep">&gt;</span>
+        <span class="breadcrumb-item">Search services</span>
+        <span class="breadcrumb-sep">&gt;</span>
+        <span class="breadcrumb-item active">local-search-simulator</span>
+    </div>
+
+    <div class="azure-body">
+        @* ── Left Nav ── *@
+        <nav class="azure-nav">
+            <NavMenu />
+        </nav>
+
+        @* ── Content ── *@
+        <main class="azure-content">
+            @Body
+        </main>
+    </div>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
