@@ -2,19 +2,9 @@
 @inject SearchSimulatorApiClient ApiClient
 @inject NavigationManager Navigation
 @using System.Text.Json
+@using System.Text.RegularExpressions
 
 <PageTitle>@Name - Data source - Azure AI Search Simulator</PageTitle>
-
-<div class="page-header">
-    <h1>@Name</h1>
-    <div class="page-toolbar">
-        <FluentButton Appearance="Appearance.Outline" OnClick="@LoadDataAsync"
-                      IconStart="@(new RegularIcons.Size16.ArrowClockwise())">Refresh</FluentButton>
-        <FluentButton Appearance="Appearance.Outline" OnClick="@ConfirmDelete"
-                      IconStart="@(new RegularIcons.Size16.Delete())"
-                      style="color: #a80000;">Delete</FluentButton>
-    </div>
-</div>
 
 @if (_loading)
 {
@@ -28,38 +18,50 @@ else if (_dataSource == null)
     <div class="empty-state">
         <h3>Data source not found</h3>
         <p>The data source "@Name" was not found.</p>
-        <FluentButton Appearance="Appearance.Accent" OnClick="@(() => Navigation.NavigateTo("/data-sources"))">Back to data sources</FluentButton>
+        <FluentButton Appearance="Appearance.Accent" OnClick='@(() => Navigation.NavigateTo("/data-sources"))'>Back to data sources</FluentButton>
     </div>
 }
 else
 {
-    @* ── Essentials ── *@
-    <div class="essentials-panel">
-        <div class="essentials-grid">
-            <div class="essentials-item">
-                <span class="essentials-label">Type</span>
-                <span class="essentials-value">@_dataSource.Type</span>
-            </div>
-            <div class="essentials-item">
-                <span class="essentials-label">Container</span>
-                <span class="essentials-value">@(_dataSource.Container?.Name ?? "—")</span>
-            </div>
-            <div class="essentials-item">
-                <span class="essentials-label">Description</span>
-                <span class="essentials-value">@(_dataSource.Description ?? "—")</span>
-            </div>
-            @if (_dataSource.Container?.Query != null)
-            {
-                <div class="essentials-item">
-                    <span class="essentials-label">Query</span>
-                    <span class="essentials-value" style="font-family: Consolas, monospace; font-size: 12px;">@_dataSource.Container.Query</span>
-                </div>
-            }
+    @* ── Header ── *@
+    <div class="idx-header">
+        <h1 class="idx-title">@_dataSource.Name</h1>
+        <span class="idx-ellipsis">⋯</span>
+    </div>
+    <div style="font-size:13px; color:#605e5c; margin-bottom:12px;">@TypeDisplayName(_dataSource.Type)</div>
+
+    @* ── Command bar ── *@
+    <div class="idx-commandbar">
+        <FluentButton Appearance="Appearance.Stealth" class="cmd-btn" OnClick="@LoadDataAsync"
+                      IconStart="@(new RegularIcons.Size16.ArrowClockwise())">Refresh</FluentButton>
+        <div class="cmd-divider"></div>
+        <FluentButton Appearance="Appearance.Stealth" class="cmd-btn" OnClick="@OpenEditFlyout"
+                      IconStart="@(new RegularIcons.Size16.Edit())">Edit</FluentButton>
+        <FluentButton Appearance="Appearance.Stealth" class="cmd-btn" OnClick="@OpenEditJson"
+                      IconStart="@(new RegularIcons.Size16.Code())">Edit JSON</FluentButton>
+        <div class="cmd-divider"></div>
+        <FluentButton Appearance="Appearance.Stealth" class="cmd-btn" OnClick="@ConfirmDelete"
+                      IconStart="@(new RegularIcons.Size16.Delete())">Delete</FluentButton>
+    </div>
+
+    @* ── Left summary panel ── *@
+    <div class="dsd-summary">
+        <div class="dsd-summary-row">
+            <span class="dsd-summary-label">@(IsFilesystem ? "Path *" : "Storage account *")</span>
+            <span class="dsd-summary-value">@ConnectionDisplayValue</span>
+        </div>
+        <div class="dsd-summary-row">
+            <span class="dsd-summary-label">@(IsFilesystem ? "Subfolder *" : "Blob container *") <span class="cidx-info">ⓘ</span></span>
+            <span class="dsd-summary-value">@(_dataSource.Container?.Name ?? "—")</span>
+        </div>
+        <div class="dsd-summary-row">
+            <span class="dsd-summary-label">@(IsFilesystem ? "File pattern" : "Blob folder") <span class="cidx-info">ⓘ</span></span>
+            <span class="dsd-summary-value">@(_dataSource.Container?.Query ?? "—")</span>
         </div>
     </div>
 
     @* ── Tabs ── *@
-    <FluentTabs @bind-ActiveTabId="_activeTab">
+    <FluentTabs @bind-ActiveTabId="_activeTab" style="margin-top:16px;">
         <FluentTab Label="Properties" Id="properties">
             <div style="margin-top: 16px;">
                 <div class="detail-section">
@@ -72,15 +74,22 @@ else
                         <span class="detail-value">@_dataSource.Type</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Container name</span>
-                        <span class="detail-value">@(_dataSource.Container?.Name ?? "—")</span>
-                    </div>
-                    <div class="detail-row">
                         <span class="detail-label">Connection string</span>
-                        <span class="detail-value" style="font-family: Consolas, monospace; font-size: 12px;">
+                        <span class="detail-value" style="font-family:Consolas,monospace;font-size:12px;">
                             @(MaskConnectionString(_dataSource.Credentials?.ConnectionString))
                         </span>
                     </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Container name</span>
+                        <span class="detail-value">@(_dataSource.Container?.Name ?? "—")</span>
+                    </div>
+                    @if (!string.IsNullOrEmpty(_dataSource.Container?.Query))
+                    {
+                        <div class="detail-row">
+                            <span class="detail-label">Query / Filter</span>
+                            <span class="detail-value" style="font-family:Consolas,monospace;font-size:12px;">@_dataSource.Container.Query</span>
+                        </div>
+                    }
                     <div class="detail-row">
                         <span class="detail-label">Description</span>
                         <span class="detail-value">@(_dataSource.Description ?? "—")</span>
@@ -91,11 +100,112 @@ else
 
         <FluentTab Label="JSON definition" Id="json">
             <div style="margin-top: 16px;">
-                <div class="json-viewer">@_rawJson</div>
+                @if (_jsonLines.Any())
+                {
+                    <div class="idx-json-container">
+                        <div class="idx-json-lines">
+                            @foreach (var line in _jsonLines)
+                            {
+                                <div class="idx-json-line">
+                                    <span class="idx-line-num">@line.Number</span>
+                                    <span class="idx-line-content">@((MarkupString)line.Html)</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
             </div>
         </FluentTab>
     </FluentTabs>
 }
+
+@* ── Edit Flyout ── *@
+@if (_showEditFlyout)
+{
+    <div class="cidx-flyout-backdrop" @onclick="CloseEditFlyout"></div>
+    <div class="cidx-flyout" style="width:480px;">
+        <div class="cidx-flyout-header">
+            <h2 class="cidx-flyout-title">Configuration</h2>
+            <button class="cidx-flyout-close" @onclick="CloseEditFlyout">✕</button>
+        </div>
+
+        <div class="cidx-flyout-body">
+            @* Connection string *@
+            <div class="cds-field">
+                <label class="cds-label">@(IsFilesystem ? "Path *" : "Connection string *")</label>
+                <input class="cds-input cds-input-wide" @bind="_editConnectionString" />
+                <span class="cds-hint">@EditConnectionHint</span>
+            </div>
+
+            @* Container *@
+            <div class="cds-field">
+                <label class="cds-label">@(IsFilesystem ? "Subfolder *" : _dataSource?.Type == "adlsgen2" ? "File system name *" : "Blob container *") <span class="cidx-info">ⓘ</span></label>
+                <input class="cds-input" @bind="_editContainerName" />
+            </div>
+
+            @* Query *@
+            <div class="cds-field">
+                <label class="cds-label">@(IsFilesystem ? "File pattern" : _dataSource?.Type == "adlsgen2" ? "Directory path" : "Blob folder") <span class="cidx-info">ⓘ</span></label>
+                <input class="cds-input" @bind="_editContainerQuery" placeholder="@EditQueryPlaceholder" />
+            </div>
+
+            @* Description *@
+            <div class="cds-field">
+                <label class="cds-label">Description</label>
+                <input class="cds-input cds-input-wide" @bind="_editDescription" />
+            </div>
+
+            @* Deletion tracking *@
+            <div style="margin-top:16px;">
+                <label class="cds-checkbox-label">
+                    <input type="checkbox" @bind="_editEnableSoftDelete" />
+                    Enable deletion tracking. <span class="cidx-info">ⓘ</span>
+                </label>
+            </div>
+
+            @if (_editEnableSoftDelete)
+            {
+                <div class="cds-field" style="margin-top:12px;">
+                    <label class="cds-label">Soft delete column name</label>
+                    <input class="cds-input" @bind="_editSoftDeleteColumn" placeholder="IsDeleted" />
+                </div>
+                <div class="cds-field">
+                    <label class="cds-label">Soft delete marker value</label>
+                    <input class="cds-input" @bind="_editSoftDeleteMarker" placeholder="true" />
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(_editError))
+            {
+                <div class="cidx-error" style="margin-top:12px;">@_editError</div>
+            }
+        </div>
+
+        <div class="cidx-flyout-footer">
+            <button class="cidx-btn-create" @onclick="SaveEditAsync" disabled="@_saving">
+                @(_saving ? "Saving..." : "Save")
+            </button>
+            <button class="cidx-btn-cancel" @onclick="CloseEditFlyout">Cancel</button>
+        </div>
+    </div>
+}
+
+@* ── Edit JSON Dialog ── *@
+<FluentDialog @bind-Hidden="@_hideEditJson" Modal="true" TrapFocus="true" PreventScroll="true">
+    <FluentDialogHeader>Edit JSON</FluentDialogHeader>
+    <FluentDialogBody>
+        <FluentTextArea @bind-Value="_editJsonText" Rows="20"
+                        Style="width:100%; font-family:Consolas,monospace; font-size:13px;" />
+        @if (!string.IsNullOrEmpty(_editJsonError))
+        {
+            <FluentMessageBar Intent="MessageIntent.Error" Style="margin-top:8px;">@_editJsonError</FluentMessageBar>
+        }
+    </FluentDialogBody>
+    <FluentDialogFooter>
+        <FluentButton Appearance="Appearance.Accent" OnClick="SaveJsonAsync">Save</FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="@(() => _showEditJson = false)">Cancel</FluentButton>
+    </FluentDialogFooter>
+</FluentDialog>
 
 @* ── Delete Confirmation ── *@
 <FluentDialog @bind-Hidden="@_hideDelete" Modal="true" TrapFocus="true">
@@ -105,7 +215,7 @@ else
     </FluentDialogBody>
     <FluentDialogFooter>
         <FluentButton Appearance="Appearance.Accent" OnClick="DeleteAsync"
-                      style="background: #a80000; border-color: #a80000;">Delete</FluentButton>
+                      style="background:#a80000; border-color:#a80000;">Delete</FluentButton>
         <FluentButton Appearance="Appearance.Outline" OnClick="@(() => _showDelete = false)">Cancel</FluentButton>
     </FluentDialogFooter>
 </FluentDialog>
@@ -121,11 +231,62 @@ else
     private bool _loading = true;
     private string? _error;
     private DataSourceModel? _dataSource;
-    private string? _rawJson;
+    private string _rawJson = "";
+    private List<JsonLine> _jsonLines = [];
     private string _activeTab = "properties";
 
+    // Delete dialog
     private bool _showDelete;
     private bool _hideDelete { get => !_showDelete; set => _showDelete = !value; }
+
+    // Edit flyout
+    private bool _showEditFlyout;
+    private string _editConnectionString = "";
+    private string _editContainerName = "";
+    private string _editContainerQuery = "";
+    private string _editDescription = "";
+    private bool _editEnableSoftDelete;
+    private string _editSoftDeleteColumn = "IsDeleted";
+    private string _editSoftDeleteMarker = "true";
+    private string? _editError;
+    private bool _saving;
+
+    // Edit JSON dialog
+    private bool _showEditJson;
+    private bool _hideEditJson { get => !_showEditJson; set => _showEditJson = !value; }
+    private string _editJsonText = "";
+    private string? _editJsonError;
+
+    // Helpers
+    private bool IsFilesystem => _dataSource?.Type == "filesystem";
+
+    private string ConnectionDisplayValue
+    {
+        get
+        {
+            var cs = _dataSource?.Credentials?.ConnectionString;
+            if (string.IsNullOrEmpty(cs)) return "—";
+            if (IsFilesystem) return cs;
+            // For Azure types, show shortened
+            return cs.Length <= 40 ? cs : cs[..30] + "…";
+        }
+    }
+
+    private string EditConnectionHint => _dataSource?.Type switch
+    {
+        "filesystem" => "Local file system path (e.g. ./data/hotels)",
+        "azureblob" => "Azure Blob Storage connection string, SAS URL, or managed identity endpoint",
+        "adlsgen2" => "ADLS Gen2 connection string or DFS endpoint",
+        _ => ""
+    };
+
+    private string EditQueryPlaceholder => _dataSource?.Type switch
+    {
+        "filesystem" => "*.pdf",
+        "azureblob" => "your/folder/here",
+        "adlsgen2" => "data/raw/",
+        _ => ""
+    };
 
     protected override async Task OnInitializedAsync() => await LoadDataAsync();
 
@@ -146,6 +307,8 @@ else
                 _rawJson = JsonSerializer.Serialize(doc, new JsonSerializerOptions { WriteIndented = true });
             }
             catch { _rawJson = raw; }
+
+            _jsonLines = BuildHighlightedLines(_rawJson);
         }
         catch (Exception ex)
         {
@@ -157,6 +320,161 @@ else
         }
     }
 
+    // ── Edit flyout ──
+    private void OpenEditFlyout()
+    {
+        if (_dataSource == null) return;
+        _editConnectionString = _dataSource.Credentials?.ConnectionString ?? "";
+        _editContainerName = _dataSource.Container?.Name ?? "";
+        _editContainerQuery = _dataSource.Container?.Query ?? "";
+        _editDescription = _dataSource.Description ?? "";
+        _editEnableSoftDelete = _dataSource.DataDeletionDetectionPolicy != null;
+        _editError = null;
+
+        // Try to extract soft delete fields from existing policy
+        if (_dataSource.DataDeletionDetectionPolicy is JsonElement policyEl)
+        {
+            try
+            {
+                if (policyEl.TryGetProperty("softDeleteColumnName", out var colProp))
+                    _editSoftDeleteColumn = colProp.GetString() ?? "IsDeleted";
+                if (policyEl.TryGetProperty("softDeleteMarkerValue", out var valProp))
+                    _editSoftDeleteMarker = valProp.GetString() ?? "true";
+            }
+            catch { }
+        }
+
+        _showEditFlyout = true;
+    }
+
+    private void CloseEditFlyout() => _showEditFlyout = false;
+
+    private async Task SaveEditAsync()
+    {
+        _editError = null;
+
+        if (string.IsNullOrWhiteSpace(_editConnectionString))
+        {
+            _editError = "Connection string is required.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_editContainerName))
+        {
+            _editError = "Container name is required.";
+            return;
+        }
+
+        _saving = true;
+        StateHasChanged();
+
+        try
+        {
+            var ds = new Dictionary<string, object?>
+            {
+                ["name"] = Name,
+                ["type"] = _dataSource!.Type,
+                ["credentials"] = new Dictionary<string, object?>
+                {
+                    ["connectionString"] = _editConnectionString.Trim()
+                },
+                ["container"] = BuildEditContainer()
+            };
+
+            if (!string.IsNullOrWhiteSpace(_editDescription))
+                ds["description"] = _editDescription.Trim();
+
+            if (_editEnableSoftDelete && !string.IsNullOrWhiteSpace(_editSoftDeleteColumn))
+            {
+                ds["dataDeletionDetectionPolicy"] = new Dictionary<string, object?>
+                {
+                    ["@odata.type"] = "#Microsoft.Azure.Search.SoftDeleteColumnDeletionDetectionPolicy",
+                    ["softDeleteColumnName"] = _editSoftDeleteColumn.Trim(),
+                    ["softDeleteMarkerValue"] = _editSoftDeleteMarker.Trim()
+                };
+            }
+
+            var json = JsonSerializer.Serialize(ds, new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+            });
+
+            var success = await ApiClient.UpdateDataSourceAsync(Name, json);
+            if (success)
+            {
+                _showEditFlyout = false;
+                await LoadDataAsync();
+            }
+            else
+            {
+                _editError = "Failed to update data source. Check the configuration.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _editError = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private Dictionary<string, object?> BuildEditContainer()
+    {
+        var c = new Dictionary<string, object?> { ["name"] = _editContainerName.Trim() };
+        if (!string.IsNullOrWhiteSpace(_editContainerQuery))
+            c["query"] = _editContainerQuery.Trim();
+        return c;
+    }
+
+    // ── Edit JSON ──
+    private void OpenEditJson()
+    {
+        _editJsonText = _rawJson;
+        _editJsonError = null;
+        _showEditJson = true;
+    }
+
+    private async Task SaveJsonAsync()
+    {
+        _editJsonError = null;
+
+        if (string.IsNullOrWhiteSpace(_editJsonText))
+        {
+            _editJsonError = "JSON body is required.";
+            return;
+        }
+
+        // Validate JSON
+        try { JsonDocument.Parse(_editJsonText); }
+        catch (JsonException ex)
+        {
+            _editJsonError = $"Invalid JSON: {ex.Message}";
+            return;
+        }
+
+        try
+        {
+            var success = await ApiClient.UpdateDataSourceAsync(Name, _editJsonText);
+            if (success)
+            {
+                _showEditJson = false;
+                await LoadDataAsync();
+            }
+            else
+            {
+                _editJsonError = "Failed to update data source.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _editJsonError = ex.Message;
+        }
+    }
+
+    // ── Delete ──
     private void ConfirmDelete() => _showDelete = true;
 
     private async Task DeleteAsync()
@@ -173,10 +491,53 @@ else
         }
     }
 
+    // ── Utilities ──
     private string MaskConnectionString(string? cs)
     {
         if (string.IsNullOrEmpty(cs)) return "—";
         if (cs.Length <= 20) return "••••••••";
         return cs[..10] + "••••••••" + cs[^5..];
+    }
+
+    private string TypeDisplayName(string type) => type switch
+    {
+        "azureblob" => "Azure Blob Storage",
+        "adlsgen2" => "Azure Data Lake Storage Gen2",
+        "filesystem" => "Local File System",
+        _ => type
+    };
+
+    // ── JSON syntax highlighting ──
+    private List<JsonLine> BuildHighlightedLines(string json)
+    {
+        var lines = new List<JsonLine>();
+        if (string.IsNullOrWhiteSpace(json)) return lines;
+
+        var rawLines = json.Split('\n');
+        for (int i = 0; i < rawLines.Length; i++)
+        {
+            lines.Add(new JsonLine { Number = i + 1, Html = SyntaxHighlight(rawLines[i].TrimEnd('\r')) });
+        }
+        return lines;
+    }
+
+    private string SyntaxHighlight(string line)
+    {
+        line = System.Web.HttpUtility.HtmlEncode(line);
+        line = Regex.Replace(line, @"(&quot;)((?:(?!&quot;).)*)(&quot;)\s*:", m =>
+            $"<span class=\"json-key\">{m.Groups[1].Value}{m.Groups[2].Value}{m.Groups[3].Value}</span>:");
+        line = Regex.Replace(line, @":\s*(&quot;)((?:(?!&quot;).)*)(&quot;)", m =>
+            $": <span class=\"json-string\">{m.Groups[1].Value}{m.Groups[2].Value}{m.Groups[3].Value}</span>");
+        line = Regex.Replace(line, @":\s*(\d+\.?\d*)", m =>
+            $": <span class=\"json-number\">{m.Groups[1].Value}</span>");
+        line = Regex.Replace(line, @":\s*(true|false|null)", m =>
+            $": <span class=\"json-bool\">{m.Groups[1].Value}</span>");
+        return line;
+    }
+
+    private class JsonLine
+    {
+        public int Number { get; set; }
+        public string Html { get; set; } = "";
     }
 }

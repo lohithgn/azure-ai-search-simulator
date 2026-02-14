@@ -1241,3 +1241,33 @@ h3 { font-size: 14px; font-weight: 600; }
     height: 16px;
     accent-color: #0078d4;
 }
+
+/* ── Data Source Detail summary ── */
+.dsd-summary {
+    background: #f3f2f1;
+    border: 1px solid #edebe9;
+    border-radius: 4px;
+    padding: 16px 20px;
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 500px;
+}
+
+.dsd-summary-row {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.dsd-summary-label {
+    font-size: 12px;
+    color: #605e5c;
+    font-weight: 600;
+}
+
+.dsd-summary-value {
+    font-size: 14px;
+    color: #323130;
+}

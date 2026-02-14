@@ -175,6 +175,13 @@ public class SearchSimulatorApiClient
         return response.IsSuccessStatusCode;
     }
 
+    public async Task<bool> UpdateDataSourceAsync(string name, string jsonBody)
+    {
+        var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+        var response = await _httpClient.PutAsync(V($"/datasources/{name}"), content);
+        return response.IsSuccessStatusCode;
+    }
+
     public async Task<bool> DeleteDataSourceAsync(string name)
     {
         var response = await _httpClient.DeleteAsync(V($"/datasources/{name}"));
