@@ -4,6 +4,9 @@ using Microsoft.FluentUI.AspNetCore.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add Aspire service defaults (OpenTelemetry, health checks, resilience, service discovery)
+builder.AddServiceDefaults();
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -13,16 +16,17 @@ builder.Services.AddFluentUIComponents();
 builder.Services.AddHttpClient();
 
 // Configure the Search Simulator API client
+// When running under Aspire, "https+http://api" resolves via service discovery.
+// Falls back to SimulatorApi:BaseUrl from appsettings.json for standalone mode.
 builder.Services.AddHttpClient<SearchSimulatorApiClient>(client =>
 {
-    var baseUrl = builder.Configuration["SimulatorApi:BaseUrl"] ?? "https://localhost:7250";
+    var baseUrl = builder.Configuration["services:api:https:0"]
+        ?? builder.Configuration["services:api:http:0"]
+        ?? builder.Configuration["SimulatorApi:BaseUrl"]
+        ?? "https://localhost:7250";
     client.BaseAddress = new Uri(baseUrl);
     var apiKey = builder.Configuration["SimulatorApi:ApiKey"] ?? "admin-key-12345";
     client.DefaultRequestHeaders.Add("api-key", apiKey);
-})
-.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-{
-    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
 });
 
 var app = builder.Build();
@@ -40,5 +44,8 @@ app.UseAntiforgery();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+// Map Aspire default health check endpoints (/health, /alive)
+app.MapDefaultEndpoints();
 
 app.Run();

@@ -12,4 +12,8 @@
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.14.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\AzureAISearchSimulator.ServiceDefaults\AzureAISearchSimulator.ServiceDefaults.csproj" />
+  </ItemGroup>
+
 </Project>

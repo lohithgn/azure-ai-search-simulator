@@ -23,6 +23,7 @@
     <ProjectReference Include="..\AzureAISearchSimulator.Core\AzureAISearchSimulator.Core.csproj" />
     <ProjectReference Include="..\AzureAISearchSimulator.DataSources\AzureAISearchSimulator.DataSources.csproj" />
     <ProjectReference Include="..\AzureAISearchSimulator.Search\AzureAISearchSimulator.Search.csproj" />
+    <ProjectReference Include="..\AzureAISearchSimulator.ServiceDefaults\AzureAISearchSimulator.ServiceDefaults.csproj" />
     <ProjectReference Include="..\AzureAISearchSimulator.Storage\AzureAISearchSimulator.Storage.csproj" />
   </ItemGroup>
 

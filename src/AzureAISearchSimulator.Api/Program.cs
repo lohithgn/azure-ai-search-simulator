@@ -26,6 +26,9 @@ try
 
     var builder = WebApplication.CreateBuilder(args);
 
+    // Add Aspire service defaults (OpenTelemetry, health checks, resilience, service discovery)
+    builder.AddServiceDefaults();
+
     // Configure Serilog from appsettings
     builder.Host.UseSerilog((context, services, configuration) => configuration
         .ReadFrom.Configuration(context.Configuration)
@@ -168,9 +171,8 @@ try
 
     app.MapControllers();
 
-    // Health check endpoint
-    app.MapGet("/health", () => Results.Ok(new { Status = "Healthy", Timestamp = DateTime.UtcNow }))
-        .ExcludeFromDescription();
+    // Map Aspire default health check endpoints (/health, /alive)
+    app.MapDefaultEndpoints();
 
     Log.Information("Azure AI Search Simulator is ready at {Urls}", 
         string.Join(", ", app.Urls.DefaultIfEmpty("http://localhost:5000")));
