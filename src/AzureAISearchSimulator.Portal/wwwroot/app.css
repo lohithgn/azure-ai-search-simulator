@@ -1271,3 +1271,213 @@ h3 { font-size: 14px; font-weight: 600; }
     font-size: 14px;
     color: #323130;
 }
+
+/* ── Keys & Tokens page ── */
+.kt-section {
+    background: #fff;
+    border: 1px solid #edebe9;
+    border-radius: 4px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+}
+
+.kt-section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #323130;
+    margin: 0 0 12px 0;
+}
+
+.kt-key-row {
+    padding: 12px 0;
+    border-bottom: 1px solid #f3f2f1;
+}
+
+.kt-key-row:last-child {
+    border-bottom: none;
+}
+
+.kt-key-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 8px;
+}
+
+.kt-key-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #323130;
+}
+
+.kt-key-desc {
+    font-size: 12px;
+    color: #605e5c;
+}
+
+.kt-key-value-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.kt-key-value {
+    flex: 1;
+    font-family: Consolas, monospace;
+    font-size: 13px;
+    color: #323130;
+    background: #f3f2f1;
+    padding: 6px 12px;
+    border-radius: 3px;
+    border: 1px solid #edebe9;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Token generation roles */
+.kt-roles {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.kt-role-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    background: #f3f2f1;
+    border: 1px solid #edebe9;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+}
+
+.kt-role-item:hover {
+    border-color: #0078d4;
+}
+
+.kt-role-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #0078d4;
+    margin-top: 2px;
+}
+
+.kt-role-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #323130;
+    display: block;
+}
+
+.kt-role-desc {
+    font-size: 12px;
+    color: #605e5c;
+    display: block;
+}
+
+/* Token result */
+.kt-token-result {
+    margin-top: 16px;
+    background: #f3f2f1;
+    border: 1px solid #edebe9;
+    border-radius: 4px;
+    padding: 16px;
+}
+
+.kt-token-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.kt-token-roles {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.kt-token-role-badge {
+    font-size: 11px;
+    font-weight: 600;
+    color: #0078d4;
+    background: #deecf9;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.kt-token-box {
+    background: #fff;
+    border: 1px solid #d2d0ce;
+    border-radius: 3px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    max-height: 100px;
+    overflow-y: auto;
+    word-break: break-all;
+}
+
+.kt-token-box code {
+    font-family: Consolas, monospace;
+    font-size: 12px;
+    color: #323130;
+}
+
+/* Validation result */
+.kt-validation-result {
+    margin-top: 16px;
+    background: #f3f2f1;
+    border: 1px solid #edebe9;
+    border-radius: 4px;
+    padding: 16px;
+}
+
+.kt-val-badge {
+    display: inline-block;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 4px;
+    margin-bottom: 12px;
+}
+
+.kt-val-valid {
+    background: #dff6dd;
+    color: #107c10;
+}
+
+.kt-val-invalid {
+    background: #fde7e9;
+    color: #a80000;
+}
+
+.kt-val-claims {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.kt-val-claim-row {
+    display: flex;
+    gap: 12px;
+    padding: 4px 0;
+    border-bottom: 1px solid #edebe9;
+    font-size: 13px;
+}
+
+.kt-val-claim-key {
+    font-weight: 600;
+    color: #605e5c;
+    min-width: 140px;
+    font-family: Consolas, monospace;
+    font-size: 12px;
+}
+
+.kt-val-claim-value {
+    color: #323130;
+    word-break: break-all;
+}

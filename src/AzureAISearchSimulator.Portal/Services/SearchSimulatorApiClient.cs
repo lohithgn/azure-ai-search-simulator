@@ -218,6 +218,25 @@ public class SearchSimulatorApiClient
         return response.IsSuccessStatusCode;
     }
 
+    // ─── Token Operations ─────────────────────────────────────────
+
+    public async Task<string?> GenerateTokenAsync(string jsonBody)
+    {
+        var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+        var response = await _httpClient.PostAsync(V("/admin/token"), content);
+        if (!response.IsSuccessStatusCode) return null;
+        return await response.Content.ReadAsStringAsync();
+    }
+
+    public async Task<string?> ValidateTokenAsync(string token)
+    {
+        var body = JsonSerializer.Serialize(new { token });
+        var content = new StringContent(body, Encoding.UTF8, "application/json");
+        var response = await _httpClient.PostAsync(V("/admin/token/validate"), content);
+        if (!response.IsSuccessStatusCode) return null;
+        return await response.Content.ReadAsStringAsync();
+    }
+
     // ─── Utility ─────────────────────────────────────────────────
 
     public async Task<string> GetRawJsonAsync(string path)

@@ -1,110 +1,351 @@
 @page "/keys"
 @inject SearchSimulatorApiClient ApiClient
 @inject IJSRuntime JS
+@using System.Text.Json
 
-<PageTitle>Keys - Azure AI Search Simulator</PageTitle>
+<PageTitle>Keys & Tokens - Azure AI Search Simulator</PageTitle>
 
-<div class="page-header">
-    <h1>Keys</h1>
+<div class="idx-header">
+    <h1 class="idx-title">Keys</h1>
 </div>
+<div style="font-size:13px; color:#605e5c; margin-bottom:12px;">API keys and bearer tokens for authenticating with the search service.</div>
 
-<div class="detail-section">
-    <p style="color: #605e5c; margin-bottom: 20px;">
-        Use API keys to authenticate requests to your search service.
-        Admin keys grant full access to all operations. Query keys grant read-only access for search queries.
-    </p>
+@* ── API Keys section ── *@
+<div class="kt-section">
+    <h2 class="kt-section-title">API Keys</h2>
 
-    @* ── Endpoint ── *@
-    <div style="margin-bottom: 24px;">
-        <h2>Endpoint</h2>
-        <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
-            <span class="key-value" style="flex: 1;">@ApiClient.BaseUrl</span>
-            <FluentButton Appearance="Appearance.Outline" Title="Copy" OnClick="@(() => CopyToClipboard(ApiClient.BaseUrl))"
+    @* Endpoint *@
+    <div class="kt-key-row">
+        <div class="kt-key-info">
+            <span class="kt-key-label">Endpoint</span>
+            <span class="kt-key-desc">Base URL for all API requests</span>
+        </div>
+        <div class="kt-key-value-row">
+            <span class="kt-key-value">@ApiClient.BaseUrl</span>
+            <FluentButton Appearance="Appearance.Outline" Size="ButtonSize.Small" Title="Copy"
+                          OnClick="@(() => CopyToClipboard(ApiClient.BaseUrl))"
                           IconStart="@(new RegularIcons.Size16.Copy())">Copy</FluentButton>
         </div>
     </div>
 
-    @* ── Admin API Key ── *@
-    <div style="margin-bottom: 24px;">
-        <h2>Admin API key</h2>
-        <p style="font-size: 12px; color: #605e5c; margin-bottom: 8px;">
-            Admin keys provide full access to all content operations including the ability to manage indexes, indexers, and data sources.
-        </p>
-        <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
-            @if (_showAdminKey)
-            {
-                <span class="key-value" style="flex: 1;">@ApiClient.AdminApiKey</span>
-            }
-            else
-            {
-                <span class="key-value" style="flex: 1;">••••••••••••••••••••••••••••••••</span>
-            }
-            <FluentButton Appearance="Appearance.Outline" Title="@(_showAdminKey ? "Hide" : "Show")"
+    @* Admin Key *@
+    <div class="kt-key-row">
+        <div class="kt-key-info">
+            <span class="kt-key-label">Admin API key</span>
+            <span class="kt-key-desc">Full read/write access to all operations</span>
+        </div>
+        <div class="kt-key-value-row">
+            <span class="kt-key-value">@(_showAdminKey ? ApiClient.AdminApiKey : "••••••••••••••••••••••••••")</span>
+            <FluentButton Appearance="Appearance.Outline" Size="ButtonSize.Small"
                           OnClick="@(() => _showAdminKey = !_showAdminKey)"
                           IconStart="@(_showAdminKey ? new RegularIcons.Size16.EyeOff() : new RegularIcons.Size16.Eye())">
                 @(_showAdminKey ? "Hide" : "Show")
             </FluentButton>
-            <FluentButton Appearance="Appearance.Outline" Title="Copy" OnClick="@(() => CopyToClipboard(ApiClient.AdminApiKey))"
+            <FluentButton Appearance="Appearance.Outline" Size="ButtonSize.Small" Title="Copy"
+                          OnClick="@(() => CopyToClipboard(ApiClient.AdminApiKey))"
                           IconStart="@(new RegularIcons.Size16.Copy())">Copy</FluentButton>
         </div>
     </div>
 
-    @* ── Query API Key ── *@
-    <div style="margin-bottom: 24px;">
-        <h2>Query API key</h2>
-        <p style="font-size: 12px; color: #605e5c; margin-bottom: 8px;">
-            Query keys provide read-only access to indexes and documents, and are typically distributed to client applications that issue search requests.
-        </p>
-        <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
-            @if (_showQueryKey)
-            {
-                <span class="key-value" style="flex: 1;">@ApiClient.QueryApiKey</span>
-            }
-            else
-            {
-                <span class="key-value" style="flex: 1;">••••••••••••••••••••••••••••••••</span>
-            }
-            <FluentButton Appearance="Appearance.Outline" Title="@(_showQueryKey ? "Hide" : "Show")"
+    @* Query Key *@
+    <div class="kt-key-row">
+        <div class="kt-key-info">
+            <span class="kt-key-label">Query API key</span>
+            <span class="kt-key-desc">Read-only access for search, suggest, and autocomplete</span>
+        </div>
+        <div class="kt-key-value-row">
+            <span class="kt-key-value">@(_showQueryKey ? ApiClient.QueryApiKey : "••••••••••••••••••••••••••")</span>
+            <FluentButton Appearance="Appearance.Outline" Size="ButtonSize.Small"
                           OnClick="@(() => _showQueryKey = !_showQueryKey)"
                           IconStart="@(_showQueryKey ? new RegularIcons.Size16.EyeOff() : new RegularIcons.Size16.Eye())">
                 @(_showQueryKey ? "Hide" : "Show")
             </FluentButton>
-            <FluentButton Appearance="Appearance.Outline" Title="Copy" OnClick="@(() => CopyToClipboard(ApiClient.QueryApiKey))"
+            <FluentButton Appearance="Appearance.Outline" Size="ButtonSize.Small" Title="Copy"
+                          OnClick="@(() => CopyToClipboard(ApiClient.QueryApiKey))"
                           IconStart="@(new RegularIcons.Size16.Copy())">Copy</FluentButton>
-        </div>
-    </div>
-
-    @* ── Usage Hints ── *@
-    <div class="essentials-panel">
-        <h3 style="margin-bottom: 12px;">Quick reference</h3>
-        <div style="font-size: 13px; color: #323130;">
-            <p style="margin-bottom: 8px;"><strong>Header-based authentication:</strong></p>
-            <div class="json-viewer" style="font-size: 12px; max-height: 120px;">api-key: &lt;your-admin-or-query-key&gt;</div>
-
-            <p style="margin-top: 16px; margin-bottom: 8px;"><strong>Example search request:</strong></p>
-            <div class="json-viewer" style="font-size: 12px; max-height: 150px;">POST @(ApiClient.BaseUrl)/indexes/&lt;index-name&gt;/docs/search?api-version=2024-07-01
-Content-Type: application/json
-api-key: @(ApiClient.QueryApiKey)
-
-{
-  "search": "*",
-  "count": true
-}</div>
         </div>
     </div>
 </div>
 
+@* ── Generate Token section ── *@
+<div class="kt-section">
+    <h2 class="kt-section-title">Generate Bearer Token</h2>
+    <p style="font-size:13px; color:#605e5c; margin-bottom:16px;">
+        Generate a simulated JWT token for testing Bearer token authentication. Select one or more roles and click Generate.
+    </p>
+
+    <div class="kt-roles">
+        <label class="kt-role-item">
+            <input type="checkbox" @bind="_roleServiceContributor" />
+            <div>
+                <span class="kt-role-name">Search Service Contributor</span>
+                <span class="kt-role-desc">Manage indexes, indexers, data sources, skillsets</span>
+            </div>
+        </label>
+        <label class="kt-role-item">
+            <input type="checkbox" @bind="_roleDataContributor" />
+            <div>
+                <span class="kt-role-name">Search Index Data Contributor</span>
+                <span class="kt-role-desc">Upload, merge, and delete documents</span>
+            </div>
+        </label>
+        <label class="kt-role-item">
+            <input type="checkbox" @bind="_roleDataReader" />
+            <div>
+                <span class="kt-role-name">Search Index Data Reader</span>
+                <span class="kt-role-desc">Search, suggest, autocomplete (read-only)</span>
+            </div>
+        </label>
+    </div>
+
+    <FluentButton Appearance="Appearance.Accent" OnClick="GenerateTokenClick" Disabled="@(!AnyRoleSelected || _generating)"
+                  IconStart="@(new RegularIcons.Size16.Key())" Style="margin-top:12px;">
+        @(_generating ? "Generating..." : "Generate token")
+    </FluentButton>
+
+    @if (!string.IsNullOrEmpty(_genError))
+    {
+        <FluentMessageBar Intent="MessageIntent.Error" Style="margin-top:12px;">@_genError</FluentMessageBar>
+    }
+
+    @if (!string.IsNullOrEmpty(_generatedToken))
+    {
+        <div class="kt-token-result">
+            <div class="kt-token-header">
+                <span style="font-weight:600; font-size:13px;">Generated Token</span>
+                <span style="font-size:12px; color:#605e5c;">Expires: @_tokenExpiresAt</span>
+            </div>
+            <div class="kt-token-roles">
+                @foreach (var r in _tokenRoles)
+                {
+                    <span class="kt-token-role-badge">@r</span>
+                }
+            </div>
+            <div class="kt-token-box">
+                <code>@_generatedToken</code>
+            </div>
+            <FluentButton Appearance="Appearance.Outline" Size="ButtonSize.Small"
+                          OnClick="@(() => CopyToClipboard(_generatedToken))"
+                          IconStart="@(new RegularIcons.Size16.Copy())">Copy token</FluentButton>
+        </div>
+    }
+</div>
+
+@* ── Validate Token section ── *@
+<div class="kt-section">
+    <h2 class="kt-section-title">Validate Token</h2>
+    <p style="font-size:13px; color:#605e5c; margin-bottom:12px;">
+        Paste a JWT token to inspect its claims and check validity.
+    </p>
+
+    <FluentTextArea @bind-Value="_validateTokenInput" Rows="4" Placeholder="Paste JWT token here..."
+                    Style="width:100%; font-family:Consolas,monospace; font-size:12px;" />
+
+    <FluentButton Appearance="Appearance.Accent" OnClick="ValidateTokenClick"
+                  Disabled="@(string.IsNullOrWhiteSpace(_validateTokenInput) || _validating)"
+                  IconStart="@(new RegularIcons.Size16.ShieldCheckmark())" Style="margin-top:8px;">
+        @(_validating ? "Validating..." : "Validate")
+    </FluentButton>
+
+    @if (!string.IsNullOrEmpty(_valError))
+    {
+        <FluentMessageBar Intent="MessageIntent.Error" Style="margin-top:12px;">@_valError</FluentMessageBar>
+    }
+
+    @if (_validationResult != null)
+    {
+        <div class="kt-validation-result">
+            <div class="kt-val-badge @(_valIsValid ? "kt-val-valid" : "kt-val-invalid")">
+                @(_valIsValid ? "✓ Valid" : "✗ Invalid")
+            </div>
+
+            @if (_valIsValid && _valClaims != null)
+            {
+                <div class="kt-val-claims">
+                    @foreach (var kv in _valClaims)
+                    {
+                        <div class="kt-val-claim-row">
+                            <span class="kt-val-claim-key">@kv.Key</span>
+                            <span class="kt-val-claim-value">@FormatClaimValue(kv.Value)</span>
+                        </div>
+                    }
+                </div>
+
+                @if (!string.IsNullOrEmpty(_valAccessLevel))
+                {
+                    <div style="margin-top:8px; font-size:13px;">
+                        <strong>Access level:</strong> <span class="kt-token-role-badge">@_valAccessLevel</span>
+                    </div>
+                }
+            }
+        </div>
+    }
+</div>
+
 @if (_copied)
 {
-    <FluentMessageBar Intent="MessageIntent.Success" Title="Copied" Style="position: fixed; bottom: 16px; right: 16px; z-index: 1000;">
+    <FluentMessageBar Intent="MessageIntent.Success" Title="Copied" Style="position:fixed; bottom:16px; right:16px; z-index:1000;">
         Value copied to clipboard.
     </FluentMessageBar>
 }
 
 @code {
+    // ── API Keys ──
     private bool _showAdminKey;
     private bool _showQueryKey;
     private bool _copied;
+
+    // ── Token Generation ──
+    private bool _roleServiceContributor;
+    private bool _roleDataContributor;
+    private bool _roleDataReader;
+    private bool _generating;
+    private string? _genError;
+    private string? _generatedToken;
+    private string? _tokenExpiresAt;
+    private List<string> _tokenRoles = [];
+
+    private bool AnyRoleSelected => _roleServiceContributor || _roleDataContributor || _roleDataReader;
+
+    // ── Token Validation ──
+    private string? _validateTokenInput;
+    private bool _validating;
+    private string? _valError;
+    private JsonElement? _validationResult;
+    private bool _valIsValid;
+    private Dictionary<string, JsonElement>? _valClaims;
+    private string? _valAccessLevel;
+
+    private async Task GenerateTokenClick()
+    {
+        _genError = null;
+        _generatedToken = null;
+
+        var roles = new List<string>();
+        if (_roleServiceContributor) roles.Add("Search Service Contributor");
+        if (_roleDataContributor) roles.Add("Search Index Data Contributor");
+        if (_roleDataReader) roles.Add("Search Index Data Reader");
+
+        if (roles.Count == 0)
+        {
+            _genError = "Select at least one role.";
+            return;
+        }
+
+        _generating = true;
+        StateHasChanged();
+
+        try
+        {
+            var body = JsonSerializer.Serialize(new
+            {
+                identityType = "ServicePrincipal",
+                roles,
+                expiresInMinutes = 60
+            });
+
+            var result = await ApiClient.GenerateTokenAsync(body);
+
+            if (result == null)
+            {
+                _genError = "Failed to generate token. Simulated authentication may not be enabled.";
+                return;
+            }
+
+            var doc = JsonDocument.Parse(result);
+            var root = doc.RootElement;
+
+            _generatedToken = root.GetProperty("token").GetString();
+            _tokenExpiresAt = root.TryGetProperty("expiresAt", out var exp)
+                ? exp.GetString()
+                : "—";
+            _tokenRoles = roles;
+        }
+        catch (Exception ex)
+        {
+            _genError = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            _generating = false;
+        }
+    }
+
+    private async Task ValidateTokenClick()
+    {
+        _valError = null;
+        _validationResult = null;
+        _valClaims = null;
+        _valAccessLevel = null;
+
+        if (string.IsNullOrWhiteSpace(_validateTokenInput))
+        {
+            _valError = "Paste a token first.";
+            return;
+        }
+
+        _validating = true;
+        StateHasChanged();
+
+        try
+        {
+            var result = await ApiClient.ValidateTokenAsync(_validateTokenInput.Trim());
+
+            if (result == null)
+            {
+                _valError = "Validation request failed. Simulated authentication may not be enabled.";
+                return;
+            }
+
+            var doc = JsonDocument.Parse(result);
+            _validationResult = doc.RootElement;
+
+            _valIsValid = doc.RootElement.TryGetProperty("isValid", out var iv) && iv.GetBoolean();
+
+            if (_valIsValid && doc.RootElement.TryGetProperty("claims", out var claims))
+            {
+                _valClaims = new Dictionary<string, JsonElement>();
+                foreach (var prop in claims.EnumerateObject())
+                {
+                    _valClaims[prop.Name] = prop.Value;
+                }
+            }
+
+            if (doc.RootElement.TryGetProperty("accessLevel", out var al))
+                _valAccessLevel = al.GetString();
+        }
+        catch (Exception ex)
+        {
+            _valError = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            _validating = false;
+        }
+    }
+
+    private string FormatClaimValue(JsonElement el)
+    {
+        if (el.ValueKind == JsonValueKind.Array)
+        {
+            var items = new List<string>();
+            foreach (var item in el.EnumerateArray())
+                items.Add(item.GetString() ?? item.ToString());
+            return string.Join(", ", items);
+        }
+        if (el.ValueKind == JsonValueKind.Number)
+        {
+            // Unix timestamp for exp/iat/nbf
+            var num = el.GetInt64();
+            if (num > 1_000_000_000)
+            {
+                try { return DateTimeOffset.FromUnixTimeSeconds(num).ToString("yyyy-MM-dd HH:mm:ss UTC"); }
+                catch { }
+            }
+            return num.ToString();
+        }
+        return el.GetString() ?? el.ToString();
+    }
 
     private async Task CopyToClipboard(string text)
     {
@@ -113,14 +354,10 @@ api-key: @(ApiClient.QueryApiKey)
             await JS.InvokeVoidAsync("navigator.clipboard.writeText", text);
             _copied = true;
             StateHasChanged();
-
             await Task.Delay(2000);
             _copied = false;
             StateHasChanged();
         }
-        catch
-        {
-            // Clipboard API may not be available in all contexts
-        }
+        catch { }
     }
 }
