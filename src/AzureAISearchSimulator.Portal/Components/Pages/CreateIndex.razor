@@ -84,6 +84,7 @@
                     </th>
                     <th class="cidx-th cidx-th-analyzer">Analyzer <span class="cidx-sort-icon">∨</span></th>
                     <th class="cidx-th cidx-th-dim">Dimensions <span class="cidx-sort-icon">∨</span></th>
+                    <th class="cidx-th cidx-th-profile">Profile <span class="cidx-sort-icon">∨</span></th>
                 </tr>
             </thead>
             <tbody>
@@ -91,6 +92,7 @@
                 {
                     var fieldIdx = idx;
                     var isKey = field.Key;
+                    var isVector = IsVectorType(field.Type);
                     var isSelected = _selectedFieldIndex == fieldIdx;
                     <tr class="cidx-row @(isSelected ? "cidx-row-selected" : "")"
                         @onclick="() => _selectedFieldIndex = fieldIdx">
@@ -103,23 +105,27 @@
                         <td class="cidx-td cidx-td-type">@ShortType(field.Type)</td>
                         <td class="cidx-td cidx-td-attr">
                             <input type="checkbox" checked="@(field.Retrievable ?? false)"
-                                   disabled="@isKey"
+                                   disabled="@(isKey || !IsAttributeApplicable(field.Type, "Retrievable"))"
                                    @onchange="e => field.Retrievable = (bool?)e.Value" />
                         </td>
                         <td class="cidx-td cidx-td-attr">
                             <input type="checkbox" checked="@(field.Filterable ?? false)"
+                                   disabled="@(!IsAttributeApplicable(field.Type, "Filterable"))"
                                    @onchange="e => field.Filterable = (bool?)e.Value" />
                         </td>
                         <td class="cidx-td cidx-td-attr">
                             <input type="checkbox" checked="@(field.Sortable ?? false)"
+                                   disabled="@(!IsAttributeApplicable(field.Type, "Sortable"))"
                                    @onchange="e => field.Sortable = (bool?)e.Value" />
                         </td>
                         <td class="cidx-td cidx-td-attr">
                             <input type="checkbox" checked="@(field.Facetable ?? false)"
+                                   disabled="@(!IsAttributeApplicable(field.Type, "Facetable"))"
                                    @onchange="e => field.Facetable = (bool?)e.Value" />
                         </td>
                         <td class="cidx-td cidx-td-attr">
                             <input type="checkbox" checked="@(field.Searchable ?? false)"
+                                   disabled="@(!IsAttributeApplicable(field.Type, "Searchable") && !isVector)"
                                    @onchange="e => field.Searchable = (bool?)e.Value" />
                         </td>
                         <td class="cidx-td cidx-td-analyzer">
@@ -137,10 +143,15 @@
                             }
                         </td>
                         <td class="cidx-td cidx-td-dim">
-                            @if (field.Type == "Collection(Edm.Single)")
+                            @if (isVector)
                             {
-                                <input type="number" class="cidx-dim-input" value="@field.Dimensions"
-                                       @onchange="e => field.Dimensions = int.TryParse(e.Value?.ToString(), out var d) ? d : null" />
+                                <span>@field.Dimensions</span>
+                            }
+                        </td>
+                        <td class="cidx-td cidx-td-profile">
+                            @if (isVector)
+                            {
+                                <span class="cidx-profile-badge" title="@field.VectorSearchProfile">@field.VectorSearchProfile</span>
                             }
                         </td>
                     </tr>
@@ -182,7 +193,7 @@
 
             <div class="cidx-flyout-field">
                 <label class="cidx-flyout-label">Type <span class="cidx-info">ⓘ</span></label>
-                <select class="cidx-flyout-select" @bind="_newFieldType">
+                <select class="cidx-flyout-select" value="@_newFieldType" @onchange="OnFlyoutTypeChanged">
                     @foreach (var t in _edmTypes)
                     {
                         <option value="@t">@t</option>
@@ -190,25 +201,80 @@
                 </select>
             </div>
 
-            <div class="cidx-flyout-section">
-                <h3 class="cidx-flyout-section-title">Configure attributes</h3>
+            @if (IsVectorType(_newFieldType))
+            {
+                @* ── Vector‑specific attributes ── *@
+                <div class="cidx-flyout-section">
+                    <h3 class="cidx-flyout-section-title">Configure attributes</h3>
 
-                <label class="cidx-flyout-checkbox">
-                    <input type="checkbox" @bind="_newRetrievable" /> Retrievable
-                </label>
-                <label class="cidx-flyout-checkbox">
-                    <input type="checkbox" @bind="_newFilterable" /> Filterable
-                </label>
-                <label class="cidx-flyout-checkbox">
-                    <input type="checkbox" @bind="_newSortable" /> Sortable
-                </label>
-                <label class="cidx-flyout-checkbox">
-                    <input type="checkbox" @bind="_newFacetable" /> Facetable
-                </label>
-                <label class="cidx-flyout-checkbox">
-                    <input type="checkbox" @bind="_newSearchable" /> Searchable
-                </label>
-            </div>
+                    <label class="cidx-flyout-checkbox">
+                        <input type="checkbox" @bind="_newStored" /> Include in storage
+                    </label>
+                    <label class="cidx-flyout-checkbox">
+                        <input type="checkbox" @bind="_newRetrievable" /> Retrievable
+                    </label>
+                    <label class="cidx-flyout-checkbox">
+                        <input type="checkbox" @bind="_newSearchable" /> Searchable
+                    </label>
+                </div>
+
+                <div class="cidx-flyout-field" style="margin-top:16px;">
+                    <label class="cidx-flyout-label">Dimensions *</label>
+                    <input type="number" class="cidx-flyout-input" @bind="_newDimensions" placeholder="e.g. 1536" />
+                </div>
+
+                <div class="cidx-flyout-field" style="margin-top:8px;">
+                    <label class="cidx-flyout-label">Vector search profile *</label>
+                    @if (_vectorProfiles.Count == 0)
+                    {
+                        <div class="cidx-vector-no-profiles">
+                            <span class="cidx-vector-no-profiles-text">No vector search profiles</span>
+                            <button class="cidx-vector-create-btn" @onclick="OpenProfileDialog">Create</button>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="cidx-vector-profile-row">
+                            <select class="cidx-flyout-select" @bind="_newVectorProfile">
+                                <option value="">-- Select a profile --</option>
+                                @foreach (var p in _vectorProfiles)
+                                {
+                                    <option value="@p.Name">@p.Name</option>
+                                }
+                            </select>
+                            <button class="cidx-vector-create-btn" @onclick="OpenProfileDialog" title="Create new profile">＋</button>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                @* ── Standard attributes ── *@
+                <div class="cidx-flyout-section">
+                    <h3 class="cidx-flyout-section-title">Configure attributes</h3>
+
+                    <label class="cidx-flyout-checkbox">
+                        <input type="checkbox" @bind="_newRetrievable"
+                               disabled="@(!IsAttributeApplicable(_newFieldType, "Retrievable"))" /> Retrievable
+                    </label>
+                    <label class="cidx-flyout-checkbox">
+                        <input type="checkbox" @bind="_newFilterable"
+                               disabled="@(!IsAttributeApplicable(_newFieldType, "Filterable"))" /> Filterable
+                    </label>
+                    <label class="cidx-flyout-checkbox">
+                        <input type="checkbox" @bind="_newSortable"
+                               disabled="@(!IsAttributeApplicable(_newFieldType, "Sortable"))" /> Sortable
+                    </label>
+                    <label class="cidx-flyout-checkbox">
+                        <input type="checkbox" @bind="_newFacetable"
+                               disabled="@(!IsAttributeApplicable(_newFieldType, "Facetable"))" /> Facetable
+                    </label>
+                    <label class="cidx-flyout-checkbox">
+                        <input type="checkbox" @bind="_newSearchable"
+                               disabled="@(!IsAttributeApplicable(_newFieldType, "Searchable"))" /> Searchable
+                    </label>
+                </div>
+            }
 
             @if (!string.IsNullOrEmpty(_flyoutError))
             {
@@ -219,6 +285,52 @@
         <div class="cidx-flyout-footer">
             <button class="cidx-btn-save" @onclick="SaveField">Save</button>
             <button class="cidx-btn-cancel" @onclick="CloseFlyout">Cancel</button>
+        </div>
+    </div>
+}
+
+@* ── Create Vector Search Profile Dialog ── *@
+@if (_showProfileDialog)
+{
+    <div class="cidx-flyout-backdrop" style="z-index:1100;" @onclick="CloseProfileDialog"></div>
+    <div class="cidx-profile-dialog">
+        <div class="cidx-flyout-header">
+            <h2 class="cidx-flyout-title">Create vector search profile</h2>
+            <button class="cidx-flyout-close" @onclick="CloseProfileDialog">✕</button>
+        </div>
+
+        <div class="cidx-flyout-body">
+            <div class="cidx-flyout-field">
+                <label class="cidx-flyout-label">Profile name *</label>
+                <input class="cidx-flyout-input" @bind="_profileName" placeholder="e.g. vector-profile" />
+            </div>
+
+            <div class="cidx-flyout-field">
+                <label class="cidx-flyout-label">Algorithm kind</label>
+                <select class="cidx-flyout-select" @bind="_profileAlgoKind">
+                    <option value="hnsw">hnsw</option>
+                    <option value="exhaustiveKnn">exhaustiveKnn</option>
+                </select>
+            </div>
+
+            <div class="cidx-flyout-field">
+                <label class="cidx-flyout-label">Similarity metric</label>
+                <select class="cidx-flyout-select" @bind="_profileMetric">
+                    <option value="cosine">cosine</option>
+                    <option value="euclidean">euclidean</option>
+                    <option value="dotProduct">dotProduct</option>
+                </select>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_profileError))
+            {
+                <div class="cidx-error" style="margin-top:8px;">@_profileError</div>
+            }
+        </div>
+
+        <div class="cidx-flyout-footer">
+            <button class="cidx-btn-save" @onclick="SaveProfile">Create</button>
+            <button class="cidx-btn-cancel" @onclick="CloseProfileDialog">Cancel</button>
         </div>
     </div>
 }
@@ -241,6 +353,10 @@
     private string? _error;
     private bool _creating;
 
+    // ── Vector search config (index‑level) ──
+    private List<VectorAlgorithmEntry> _vectorAlgorithms = new();
+    private List<VectorProfileEntry> _vectorProfiles = new();
+
     // ── Flyout state ──
     private bool _showFlyout;
     private string _newFieldName = "";
@@ -250,7 +366,18 @@
     private bool _newSortable;
     private bool _newFacetable;
     private bool _newSearchable;
+    // Vector‑specific flyout
+    private bool _newStored = true;
+    private int? _newDimensions;
+    private string _newVectorProfile = "";
     private string? _flyoutError;
+
+    // ── Create‑profile sub‑dialog state ──
+    private bool _showProfileDialog;
+    private string _profileName = "";
+    private string _profileAlgoKind = "hnsw";
+    private string _profileMetric = "cosine";
+    private string? _profileError;
 
     private static readonly string[] _edmTypes =
     [
@@ -267,7 +394,35 @@
         "Collection(Edm.Single)"
     ];
 
-    // ── Flyout methods ──
+    // ═══════════════════════════════════════════════
+    //  Type‑aware attribute rules
+    // ═══════════════════════════════════════════════
+
+    private static bool IsVectorType(string type) => type == "Collection(Edm.Single)";
+
+    private static bool IsSearchableType(string type) =>
+        type is "Edm.String" or "Collection(Edm.String)";
+
+    private static bool IsCollectionType(string type) =>
+        type.StartsWith("Collection(", StringComparison.Ordinal);
+
+    /// <summary>
+    /// Returns whether an attribute is applicable for a given EDM type.
+    /// </summary>
+    private static bool IsAttributeApplicable(string type, string attr) => attr switch
+    {
+        "Retrievable" => type != "Edm.ComplexType",
+        "Filterable"  => type is not ("Edm.ComplexType" or "Collection(Edm.Single)"),
+        "Sortable"    => !IsCollectionType(type) && type != "Edm.ComplexType",
+        "Facetable"   => type is not ("Edm.GeographyPoint" or "Edm.ComplexType" or "Collection(Edm.Single)") && !IsCollectionType(type) || type is "Collection(Edm.String)" or "Collection(Edm.Int32)",
+        "Searchable"  => IsSearchableType(type),
+        _ => false
+    };
+
+    // ═══════════════════════════════════════════════
+    //  Flyout methods
+    // ═══════════════════════════════════════════════
+
     private void OpenAddField()
     {
         _newFieldName = "";
@@ -277,11 +432,32 @@
         _newSortable = false;
         _newFacetable = false;
         _newSearchable = false;
+        _newStored = true;
+        _newDimensions = null;
+        _newVectorProfile = "";
         _flyoutError = null;
+        _showProfileDialog = false;
         _showFlyout = true;
     }
 
     private void CloseFlyout() => _showFlyout = false;
+
+    private void OnFlyoutTypeChanged(ChangeEventArgs e)
+    {
+        _newFieldType = e.Value?.ToString() ?? "Edm.String";
+        // Reset attributes that don't apply
+        if (!IsAttributeApplicable(_newFieldType, "Searchable")) _newSearchable = false;
+        if (!IsAttributeApplicable(_newFieldType, "Filterable")) _newFilterable = false;
+        if (!IsAttributeApplicable(_newFieldType, "Sortable"))   _newSortable = false;
+        if (!IsAttributeApplicable(_newFieldType, "Facetable"))  _newFacetable = false;
+        // Vector defaults
+        if (IsVectorType(_newFieldType))
+        {
+            _newSearchable = true;
+            _newStored = true;
+            _newRetrievable = false;
+        }
+    }
 
     private void SaveField()
     {
@@ -299,22 +475,108 @@
             return;
         }
 
-        _fields.Add(new FieldEntry
+        if (IsVectorType(_newFieldType))
         {
-            Name = _newFieldName.Trim(),
-            Type = _newFieldType,
-            Key = false,
-            Retrievable = _newRetrievable,
-            Filterable = _newFilterable,
-            Sortable = _newSortable,
-            Facetable = _newFacetable,
-            Searchable = _newSearchable
-        });
+            if (!_newDimensions.HasValue || _newDimensions.Value <= 0)
+            {
+                _flyoutError = "Dimensions is required for vector fields.";
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(_newVectorProfile))
+            {
+                _flyoutError = "A vector search profile is required.";
+                return;
+            }
+
+            _fields.Add(new FieldEntry
+            {
+                Name = _newFieldName.Trim(),
+                Type = _newFieldType,
+                Key = false,
+                Retrievable = _newRetrievable,
+                Searchable = _newSearchable,
+                Filterable = false,
+                Sortable = false,
+                Facetable = false,
+                Stored = _newStored,
+                Dimensions = _newDimensions,
+                VectorSearchProfile = _newVectorProfile
+            });
+        }
+        else
+        {
+            _fields.Add(new FieldEntry
+            {
+                Name = _newFieldName.Trim(),
+                Type = _newFieldType,
+                Key = false,
+                Retrievable = _newRetrievable,
+                Filterable = IsAttributeApplicable(_newFieldType, "Filterable") ? _newFilterable : false,
+                Sortable = IsAttributeApplicable(_newFieldType, "Sortable") ? _newSortable : false,
+                Facetable = IsAttributeApplicable(_newFieldType, "Facetable") ? _newFacetable : false,
+                Searchable = IsAttributeApplicable(_newFieldType, "Searchable") ? _newSearchable : false
+            });
+        }
 
         _showFlyout = false;
     }
 
-    // ── Table helpers ──
+    // ═══════════════════════════════════════════════
+    //  Vector search profile sub‑dialog
+    // ═══════════════════════════════════════════════
+
+    private void OpenProfileDialog()
+    {
+        _profileName = "";
+        _profileAlgoKind = "hnsw";
+        _profileMetric = "cosine";
+        _profileError = null;
+        _showProfileDialog = true;
+    }
+
+    private void CloseProfileDialog() => _showProfileDialog = false;
+
+    private void SaveProfile()
+    {
+        _profileError = null;
+
+        if (string.IsNullOrWhiteSpace(_profileName))
+        {
+            _profileError = "Profile name is required.";
+            return;
+        }
+
+        var trimmed = _profileName.Trim();
+
+        if (_vectorProfiles.Any(p => p.Name.Equals(trimmed, StringComparison.OrdinalIgnoreCase)))
+        {
+            _profileError = $"A profile named '{trimmed}' already exists.";
+            return;
+        }
+
+        var algoName = $"{trimmed}-algorithm";
+
+        _vectorAlgorithms.Add(new VectorAlgorithmEntry
+        {
+            Name = algoName,
+            Kind = _profileAlgoKind,
+            Metric = _profileMetric
+        });
+
+        _vectorProfiles.Add(new VectorProfileEntry
+        {
+            Name = trimmed,
+            Algorithm = algoName
+        });
+
+        _newVectorProfile = trimmed;
+        _showProfileDialog = false;
+    }
+
+    // ═══════════════════════════════════════════════
+    //  Table helpers
+    // ═══════════════════════════════════════════════
+
     private IEnumerable<(FieldEntry Field, int Index)> FilteredFields()
     {
         for (int i = 0; i < _fields.Count; i++)
@@ -334,7 +596,6 @@
         var val = (bool)(e.Value ?? false);
         foreach (var f in _fields)
         {
-            // Don't change retrievable on the key field
             if (f.Key && setter.Method.Name.Contains("Retrievable")) continue;
             setter(f, val);
         }
@@ -352,10 +613,10 @@
     private string ShortType(string type) =>
         type.Replace("Edm.", "").Replace("Collection(", "Collection(Edm.");
 
-    private bool IsSearchableType(string type) =>
-        type is "Edm.String" or "Collection(Edm.String)";
+    // ═══════════════════════════════════════════════
+    //  Create index
+    // ═══════════════════════════════════════════════
 
-    // ── Create ──
     private async Task CreateAsync()
     {
         _error = null;
@@ -371,13 +632,43 @@
 
         try
         {
-            var index = new
+            var indexDict = new Dictionary<string, object>
             {
-                name = _indexName.Trim(),
-                fields = _fields.Select(f => BuildFieldJson(f)).ToList()
+                ["name"] = _indexName.Trim(),
+                ["fields"] = _fields.Select(f => BuildFieldJson(f)).ToList()
             };
 
-            var json = JsonSerializer.Serialize(index, new JsonSerializerOptions
+            // Include vectorSearch config when there are vector fields
+            if (_vectorAlgorithms.Count > 0 || _vectorProfiles.Count > 0)
+            {
+                indexDict["vectorSearch"] = new Dictionary<string, object>
+                {
+                    ["algorithms"] = _vectorAlgorithms.Select(a =>
+                    {
+                        var algo = new Dictionary<string, object>
+                        {
+                            ["name"] = a.Name,
+                            ["kind"] = a.Kind
+                        };
+                        if (a.Kind == "hnsw")
+                        {
+                            algo["hnswParameters"] = new Dictionary<string, object> { ["metric"] = a.Metric };
+                        }
+                        else
+                        {
+                            algo["exhaustiveKnnParameters"] = new Dictionary<string, object> { ["metric"] = a.Metric };
+                        }
+                        return algo;
+                    }).ToList(),
+                    ["profiles"] = _vectorProfiles.Select(p => new Dictionary<string, object>
+                    {
+                        ["name"] = p.Name,
+                        ["algorithm"] = p.Algorithm
+                    }).ToList()
+                };
+            }
+
+            var json = JsonSerializer.Serialize(indexDict, new JsonSerializerOptions
             {
                 WriteIndented = true,
                 DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
@@ -418,16 +709,32 @@
             ["facetable"] = f.Facetable ?? false
         };
 
-        if (!string.IsNullOrWhiteSpace(f.Analyzer))
-            dict["analyzer"] = f.Analyzer;
-
-        if (f.Dimensions.HasValue)
-            dict["dimensions"] = f.Dimensions.Value;
+        if (IsVectorType(f.Type))
+        {
+            // Vector fields get dimensions, vectorSearchProfile, stored
+            dict["dimensions"] = f.Dimensions!.Value;
+            dict["vectorSearchProfile"] = f.VectorSearchProfile;
+            if (f.Stored == false)
+                dict["stored"] = false;
+            // Remove inapplicable attributes
+            dict.Remove("filterable");
+            dict.Remove("sortable");
+            dict.Remove("facetable");
+            dict.Remove("analyzer");
+        }
+        else
+        {
+            if (!string.IsNullOrWhiteSpace(f.Analyzer))
+                dict["analyzer"] = f.Analyzer;
+        }
 
         return dict;
     }
 
-    // ── Local model ──
+    // ═══════════════════════════════════════════════
+    //  Local models
+    // ═══════════════════════════════════════════════
+
     private class FieldEntry
     {
         public string Name { get; set; } = "";
@@ -440,5 +747,20 @@
         public bool? Searchable { get; set; }
         public string? Analyzer { get; set; }
         public int? Dimensions { get; set; }
+        public string? VectorSearchProfile { get; set; }
+        public bool? Stored { get; set; }
+    }
+
+    private class VectorAlgorithmEntry
+    {
+        public string Name { get; set; } = "";
+        public string Kind { get; set; } = "hnsw";
+        public string Metric { get; set; } = "cosine";
+    }
+
+    private class VectorProfileEntry
+    {
+        public string Name { get; set; } = "";
+        public string Algorithm { get; set; } = "";
     }
 }
