@@ -1,0 +1,247 @@
+@page "/data-sources/create"
+@inject SearchSimulatorApiClient ApiClient
+@inject NavigationManager Navigation
+@using System.Text.Json
+
+<PageTitle>Create data source - Azure AI Search Simulator</PageTitle>
+
+<div class="cidx-page">
+    @* ── Title ── *@
+    <div class="cidx-title-row">
+        <h1 class="cidx-title">Create data source</h1>
+    </div>
+
+    @* ── Form ── *@
+    <div class="cds-form">
+        @* Name *@
+        <div class="cds-field">
+            <label class="cds-label">Data source name *</label>
+            <input class="cds-input" @bind="_name" placeholder="Enter data source name" />
+        </div>
+
+        @* Description *@
+        <div class="cds-field">
+            <label class="cds-label">Description</label>
+            <input class="cds-input cds-input-wide" @bind="_description" placeholder="Optional description" />
+        </div>
+
+        @* Type *@
+        <div class="cds-field">
+            <label class="cds-label">Type *</label>
+            <select class="cds-select" @bind="_type">
+                <option value="filesystem">filesystem (Local file system)</option>
+                <option value="azureblob">azureblob (Azure Blob Storage)</option>
+                <option value="adlsgen2">adlsgen2 (Azure Data Lake Storage Gen2)</option>
+            </select>
+        </div>
+
+        @* ── Connection section ── *@
+        <div class="cds-section">
+            <h3 class="cds-section-title">Connection</h3>
+
+            <div class="cds-field">
+                <label class="cds-label">Connection string *</label>
+                <input class="cds-input cds-input-wide" @bind="_connectionString"
+                       placeholder="@ConnectionStringPlaceholder" />
+                <span class="cds-hint">@ConnectionStringHint</span>
+            </div>
+        </div>
+
+        @* ── Container section ── *@
+        <div class="cds-section">
+            <h3 class="cds-section-title">Container</h3>
+
+            <div class="cds-field">
+                <label class="cds-label">Container name *</label>
+                <input class="cds-input" @bind="_containerName"
+                       placeholder="@ContainerNamePlaceholder" />
+            </div>
+
+            <div class="cds-field">
+                <label class="cds-label">Query</label>
+                <input class="cds-input" @bind="_containerQuery"
+                       placeholder="@QueryPlaceholder" />
+                <span class="cds-hint">Optional filter or subfolder path</span>
+            </div>
+        </div>
+
+        @* ── Soft delete section ── *@
+        <div class="cds-section">
+            <h3 class="cds-section-title">Deletion detection</h3>
+
+            <label class="cds-checkbox-label">
+                <input type="checkbox" @bind="_enableSoftDelete" />
+                Enable soft delete column detection policy
+            </label>
+
+            @if (_enableSoftDelete)
+            {
+                <div class="cds-field" style="margin-top: 12px;">
+                    <label class="cds-label">Soft delete column name</label>
+                    <input class="cds-input" @bind="_softDeleteColumn" placeholder="IsDeleted" />
+                </div>
+
+                <div class="cds-field">
+                    <label class="cds-label">Soft delete marker value</label>
+                    <input class="cds-input" @bind="_softDeleteMarker" placeholder="true" />
+                </div>
+            }
+        </div>
+    </div>
+
+    @* ── Error ── *@
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <div class="cidx-error">@_error</div>
+    }
+
+    @* ── Footer ── *@
+    <div class="cidx-footer">
+        <button class="cidx-btn-create" @onclick="CreateAsync" disabled="@_creating">
+            @(_creating ? "Creating..." : "Create")
+        </button>
+        <button class="cidx-btn-cancel" @onclick='() => Navigation.NavigateTo("/data-sources")'>Cancel</button>
+    </div>
+</div>
+
+@code {
+    // Form state
+    private string _name = "";
+    private string _description = "";
+    private string _type = "filesystem";
+    private string _connectionString = "";
+    private string _containerName = "";
+    private string _containerQuery = "";
+
+    // Soft delete
+    private bool _enableSoftDelete;
+    private string _softDeleteColumn = "IsDeleted";
+    private string _softDeleteMarker = "true";
+
+    // UI state
+    private string? _error;
+    private bool _creating;
+
+    // Dynamic placeholders/hints based on selected type
+    private string ConnectionStringPlaceholder => _type switch
+    {
+        "filesystem" => @"C:\data\documents",
+        "azureblob" => "DefaultEndpointsProtocol=https;AccountName=...;AccountKey=...;EndpointSuffix=core.windows.net",
+        "adlsgen2" => "DefaultEndpointsProtocol=https;AccountName=...;AccountKey=...;EndpointSuffix=core.windows.net",
+        _ => "Enter connection string"
+    };
+
+    private string ConnectionStringHint => _type switch
+    {
+        "filesystem" => "Local file system path (e.g. C:/data or ./data/hotels)",
+        "azureblob" => "Azure Blob Storage connection string, SAS URL, or managed identity endpoint",
+        "adlsgen2" => "ADLS Gen2 connection string, SAS URL, or DFS managed identity endpoint",
+        _ => ""
+    };
+
+    private string ContainerNamePlaceholder => _type switch
+    {
+        "filesystem" => "subfolder",
+        "azureblob" => "documents",
+        "adlsgen2" => "filesystem1",
+        _ => "container"
+    };
+
+    private string QueryPlaceholder => _type switch
+    {
+        "filesystem" => "*.txt",
+        "azureblob" => "folder1/",
+        "adlsgen2" => "data/raw/",
+        _ => ""
+    };
+
+    private async Task CreateAsync()
+    {
+        _error = null;
+
+        if (string.IsNullOrWhiteSpace(_name))
+        {
+            _error = "Data source name is required.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_connectionString))
+        {
+            _error = "Connection string is required.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_containerName))
+        {
+            _error = "Container name is required.";
+            return;
+        }
+
+        _creating = true;
+        StateHasChanged();
+
+        try
+        {
+            var ds = new Dictionary<string, object?>
+            {
+                ["name"] = _name.Trim(),
+                ["type"] = _type,
+                ["credentials"] = new Dictionary<string, object?>
+                {
+                    ["connectionString"] = _connectionString.Trim()
+                },
+                ["container"] = BuildContainer()
+            };
+
+            if (!string.IsNullOrWhiteSpace(_description))
+                ds["description"] = _description.Trim();
+
+            if (_enableSoftDelete && !string.IsNullOrWhiteSpace(_softDeleteColumn))
+            {
+                ds["dataDeletionDetectionPolicy"] = new Dictionary<string, object?>
+                {
+                    ["@odata.type"] = "#Microsoft.Azure.Search.SoftDeleteColumnDeletionDetectionPolicy",
+                    ["softDeleteColumnName"] = _softDeleteColumn.Trim(),
+                    ["softDeleteMarkerValue"] = _softDeleteMarker.Trim()
+                };
+            }
+
+            var json = JsonSerializer.Serialize(ds, new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+            });
+
+            var success = await ApiClient.CreateDataSourceAsync(json);
+            if (success)
+            {
+                Navigation.NavigateTo($"/data-sources/{_name.Trim()}");
+            }
+            else
+            {
+                _error = "Failed to create data source. Check the configuration and try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = $"Error creating data source: {ex.Message}";
+        }
+        finally
+        {
+            _creating = false;
+        }
+    }
+
+    private Dictionary<string, object?> BuildContainer()
+    {
+        var c = new Dictionary<string, object?>
+        {
+            ["name"] = _containerName.Trim()
+        };
+
+        if (!string.IsNullOrWhiteSpace(_containerQuery))
+            c["query"] = _containerQuery.Trim();
+
+        return c;
+    }
+}
