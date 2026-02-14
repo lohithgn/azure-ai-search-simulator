@@ -703,3 +703,443 @@ h3 { font-size: 14px; font-weight: 600; }
 .json-bool {
     color: #0000ff;
 }
+
+/* ── Create Index Page ── */
+
+.cidx-page {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+}
+
+.cidx-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.cidx-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #323130;
+    margin: 0;
+}
+
+.cidx-name-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 8px;
+}
+
+.cidx-label {
+    font-size: 13px;
+    color: #323130;
+    white-space: nowrap;
+}
+
+.cidx-info {
+    color: #605e5c;
+    font-size: 12px;
+    cursor: help;
+}
+
+.cidx-name-input {
+    width: 280px;
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid #8a8886;
+    border-radius: 2px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #323130;
+    background: #fff;
+}
+
+.cidx-name-input:focus {
+    border-color: #0078d4;
+    outline: none;
+}
+
+.cidx-name-input::placeholder {
+    color: #a19f9d;
+}
+
+/* Toolbar */
+.cidx-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 0;
+    margin-bottom: 4px;
+    border-bottom: 1px solid #edebe9;
+}
+
+.cidx-toolbar-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border: none;
+    background: transparent;
+    color: #323130;
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    border-radius: 2px;
+    height: 32px;
+}
+
+.cidx-toolbar-btn:hover:not(:disabled) {
+    background: #f3f2f1;
+}
+
+.cidx-toolbar-disabled,
+.cidx-toolbar-btn:disabled {
+    color: #a19f9d;
+    cursor: default;
+}
+
+.cidx-toolbar-icon {
+    font-size: 14px;
+}
+
+/* Search */
+.cidx-search-row {
+    margin-bottom: 8px;
+}
+
+.cidx-search-box {
+    display: flex;
+    align-items: center;
+    border: 1px solid #8a8886;
+    border-radius: 2px;
+    background: #fff;
+    padding: 0 8px;
+    height: 28px;
+    width: 220px;
+}
+
+.cidx-search-icon {
+    font-size: 12px;
+    color: #605e5c;
+    margin-right: 6px;
+}
+
+.cidx-search-input {
+    border: none;
+    outline: none;
+    font-size: 13px;
+    font-family: inherit;
+    background: transparent;
+    flex: 1;
+    color: #323130;
+}
+
+.cidx-search-input::placeholder {
+    color: #a19f9d;
+}
+
+/* Fields table */
+.cidx-table-wrapper {
+    flex: 1;
+    overflow: auto;
+    border: 1px solid #edebe9;
+    border-radius: 2px;
+    background: #fff;
+}
+
+.cidx-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.cidx-th {
+    position: sticky;
+    top: 0;
+    background: #faf9f8;
+    border-bottom: 1px solid #edebe9;
+    padding: 6px 10px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 13px;
+    color: #323130;
+    white-space: nowrap;
+    z-index: 1;
+}
+
+.cidx-th-expand { width: 36px; }
+.cidx-th-name { min-width: 140px; }
+.cidx-th-type { min-width: 100px; }
+.cidx-th-attr { width: 100px; text-align: center; }
+.cidx-th-analyzer { min-width: 100px; }
+.cidx-th-dim { min-width: 90px; }
+
+.cidx-sort-icon {
+    font-size: 11px;
+    color: #a19f9d;
+}
+
+.cidx-row {
+    border-bottom: 1px solid #f3f2f1;
+    cursor: pointer;
+}
+
+.cidx-row:hover {
+    background: #f3f2f1;
+}
+
+.cidx-row-selected {
+    background: #deecf9 !important;
+}
+
+.cidx-td {
+    padding: 6px 10px;
+    vertical-align: middle;
+}
+
+.cidx-td-expand { text-align: center; }
+.cidx-td-attr { text-align: center; }
+
+.cidx-key-icon {
+    font-size: 14px;
+}
+
+.cidx-field-name {
+    color: #0078d4;
+    font-weight: 400;
+}
+
+.cidx-analyzer-select {
+    border: 1px solid #8a8886;
+    border-radius: 2px;
+    font-size: 12px;
+    padding: 2px 4px;
+    background: #fff;
+    font-family: inherit;
+}
+
+.cidx-dim-input {
+    width: 70px;
+    border: 1px solid #8a8886;
+    border-radius: 2px;
+    font-size: 12px;
+    padding: 2px 4px;
+    font-family: inherit;
+}
+
+/* Error */
+.cidx-error {
+    background: #fde7e9;
+    color: #a80000;
+    border: 1px solid #a80000;
+    border-radius: 2px;
+    padding: 8px 12px;
+    font-size: 13px;
+    margin-top: 8px;
+}
+
+/* Footer */
+.cidx-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 0;
+    border-top: 1px solid #edebe9;
+    margin-top: 8px;
+}
+
+.cidx-btn-create {
+    height: 32px;
+    padding: 0 20px;
+    border: 1px solid #0078d4;
+    border-radius: 2px;
+    background: #0078d4;
+    color: #fff;
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.cidx-btn-create:hover:not(:disabled) {
+    background: #106ebe;
+}
+
+.cidx-btn-create:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.cidx-btn-cancel {
+    height: 32px;
+    padding: 0 20px;
+    border: 1px solid #8a8886;
+    border-radius: 2px;
+    background: #fff;
+    color: #323130;
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.cidx-btn-cancel:hover {
+    background: #f3f2f1;
+}
+
+.cidx-btn-save {
+    height: 32px;
+    padding: 0 20px;
+    border: 1px solid #8a8886;
+    border-radius: 2px;
+    background: #fff;
+    color: #323130;
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.cidx-btn-save:hover {
+    background: #f3f2f1;
+}
+
+/* ── Add Field Flyout Panel ── */
+
+.cidx-flyout-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 1000;
+}
+
+.cidx-flyout {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 360px;
+    background: #fff;
+    box-shadow: -4px 0 16px rgba(0,0,0,0.14);
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
+}
+
+.cidx-flyout-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #edebe9;
+}
+
+.cidx-flyout-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #323130;
+    margin: 0;
+}
+
+.cidx-flyout-close {
+    border: none;
+    background: transparent;
+    font-size: 18px;
+    color: #605e5c;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 2px;
+}
+
+.cidx-flyout-close:hover {
+    background: #f3f2f1;
+    color: #323130;
+}
+
+.cidx-flyout-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.cidx-flyout-field {
+    margin-bottom: 16px;
+}
+
+.cidx-flyout-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #323130;
+    margin-bottom: 6px;
+}
+
+.cidx-flyout-input {
+    width: 100%;
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid #8a8886;
+    border-radius: 2px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #323130;
+    background: #fff;
+}
+
+.cidx-flyout-input:focus {
+    border-color: #0078d4;
+    outline: none;
+}
+
+.cidx-flyout-select {
+    width: 100%;
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid #8a8886;
+    border-radius: 2px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #323130;
+    background: #fff;
+}
+
+.cidx-flyout-select:focus {
+    border-color: #0078d4;
+    outline: none;
+}
+
+.cidx-flyout-section {
+    margin-top: 24px;
+}
+
+.cidx-flyout-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #323130;
+    margin: 0 0 12px 0;
+}
+
+.cidx-flyout-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    font-size: 14px;
+    color: #323130;
+    cursor: pointer;
+}
+
+.cidx-flyout-checkbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #0078d4;
+}
+
+.cidx-flyout-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 20px;
+    border-top: 1px solid #edebe9;
+}

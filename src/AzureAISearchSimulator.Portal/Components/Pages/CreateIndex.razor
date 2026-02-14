@@ -1,0 +1,444 @@
+@page "/indexes/create"
+@inject SearchSimulatorApiClient ApiClient
+@inject NavigationManager Navigation
+@using System.Text.Json
+
+<PageTitle>Create index - Azure AI Search Simulator</PageTitle>
+
+<div class="cidx-page">
+    @* ── Title ── *@
+    <div class="cidx-title-row">
+        <h1 class="cidx-title">Create index</h1>
+        <span class="idx-ellipsis">⋯</span>
+    </div>
+
+    @* ── Index name ── *@
+    <div class="cidx-name-row">
+        <label class="cidx-label">Index name * <span class="cidx-info" title="Required">ⓘ</span></label>
+        <input class="cidx-name-input" @bind="_indexName" placeholder="Enter index name" />
+    </div>
+
+    @* ── Field toolbar ── *@
+    <div class="cidx-toolbar">
+        <button class="cidx-toolbar-btn" @onclick="OpenAddField">
+            <span class="cidx-toolbar-icon">＋</span> Add field
+        </button>
+        <button class="cidx-toolbar-btn cidx-toolbar-disabled" disabled>
+            <span class="cidx-toolbar-icon">＋</span> Add subfield
+        </button>
+        <button class="cidx-toolbar-btn @(_selectedFieldIndex is null || _selectedFieldIndex == 0 ? "cidx-toolbar-disabled" : "")"
+                disabled="@(_selectedFieldIndex is null || _selectedFieldIndex == 0)"
+                @onclick="DeleteSelectedField">
+            <span class="cidx-toolbar-icon">🗑</span> Delete
+        </button>
+        <button class="cidx-toolbar-btn cidx-toolbar-disabled" disabled>
+            <span class="cidx-toolbar-icon">⚙</span> Autocomplete settings
+        </button>
+    </div>
+
+    @* ── Search field names ── *@
+    <div class="cidx-search-row">
+        <div class="cidx-search-box">
+            <span class="cidx-search-icon">🔍</span>
+            <input class="cidx-search-input" @bind="_fieldSearch" @bind:event="oninput"
+                   placeholder="Search field names" />
+        </div>
+    </div>
+
+    @* ── Fields table ── *@
+    <div class="cidx-table-wrapper">
+        <table class="cidx-table">
+            <thead>
+                <tr>
+                    <th class="cidx-th cidx-th-expand"></th>
+                    <th class="cidx-th cidx-th-name">
+                        Field name <span class="cidx-sort-icon">∨</span>
+                    </th>
+                    <th class="cidx-th cidx-th-type">
+                        Type <span class="cidx-sort-icon">∨</span>
+                    </th>
+                    <th class="cidx-th cidx-th-attr">
+                        Retrievable <span class="cidx-sort-icon">∨</span>
+                        <br /><input type="checkbox" checked="@AllChecked(f => f.Retrievable)"
+                                     @onchange="e => ToggleAll(e, (f, v) => f.Retrievable = v)" />
+                    </th>
+                    <th class="cidx-th cidx-th-attr">
+                        Filterable <span class="cidx-sort-icon">∨</span>
+                        <br /><input type="checkbox" checked="@AllChecked(f => f.Filterable)"
+                                     @onchange="e => ToggleAll(e, (f, v) => f.Filterable = v)" />
+                    </th>
+                    <th class="cidx-th cidx-th-attr">
+                        Sortable <span class="cidx-sort-icon">∨</span>
+                        <br /><input type="checkbox" checked="@AllChecked(f => f.Sortable)"
+                                     @onchange="e => ToggleAll(e, (f, v) => f.Sortable = v)" />
+                    </th>
+                    <th class="cidx-th cidx-th-attr">
+                        Facetable <span class="cidx-sort-icon">∨</span>
+                        <br /><input type="checkbox" checked="@AllChecked(f => f.Facetable)"
+                                     @onchange="e => ToggleAll(e, (f, v) => f.Facetable = v)" />
+                    </th>
+                    <th class="cidx-th cidx-th-attr">
+                        Searchable <span class="cidx-sort-icon">∨</span>
+                        <br /><input type="checkbox" checked="@AllChecked(f => f.Searchable)"
+                                     @onchange="e => ToggleAll(e, (f, v) => f.Searchable = v)" />
+                    </th>
+                    <th class="cidx-th cidx-th-analyzer">Analyzer <span class="cidx-sort-icon">∨</span></th>
+                    <th class="cidx-th cidx-th-dim">Dimensions <span class="cidx-sort-icon">∨</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var (field, idx) in FilteredFields())
+                {
+                    var fieldIdx = idx;
+                    var isKey = field.Key;
+                    var isSelected = _selectedFieldIndex == fieldIdx;
+                    <tr class="cidx-row @(isSelected ? "cidx-row-selected" : "")"
+                        @onclick="() => _selectedFieldIndex = fieldIdx">
+                        <td class="cidx-td cidx-td-expand">
+                            @if (isKey) { <span class="cidx-key-icon" title="Key field">🔑</span> }
+                        </td>
+                        <td class="cidx-td cidx-td-name">
+                            <span class="cidx-field-name">@field.Name</span>
+                        </td>
+                        <td class="cidx-td cidx-td-type">@ShortType(field.Type)</td>
+                        <td class="cidx-td cidx-td-attr">
+                            <input type="checkbox" checked="@(field.Retrievable ?? false)"
+                                   disabled="@isKey"
+                                   @onchange="e => field.Retrievable = (bool?)e.Value" />
+                        </td>
+                        <td class="cidx-td cidx-td-attr">
+                            <input type="checkbox" checked="@(field.Filterable ?? false)"
+                                   @onchange="e => field.Filterable = (bool?)e.Value" />
+                        </td>
+                        <td class="cidx-td cidx-td-attr">
+                            <input type="checkbox" checked="@(field.Sortable ?? false)"
+                                   @onchange="e => field.Sortable = (bool?)e.Value" />
+                        </td>
+                        <td class="cidx-td cidx-td-attr">
+                            <input type="checkbox" checked="@(field.Facetable ?? false)"
+                                   @onchange="e => field.Facetable = (bool?)e.Value" />
+                        </td>
+                        <td class="cidx-td cidx-td-attr">
+                            <input type="checkbox" checked="@(field.Searchable ?? false)"
+                                   @onchange="e => field.Searchable = (bool?)e.Value" />
+                        </td>
+                        <td class="cidx-td cidx-td-analyzer">
+                            @if (IsSearchableType(field.Type) && (field.Searchable ?? false))
+                            {
+                                <select class="cidx-analyzer-select" value="@(field.Analyzer ?? "")"
+                                        @onchange="e => field.Analyzer = e.Value?.ToString()">
+                                    <option value="">Stand...</option>
+                                    <option value="standard.lucene">standard.lucene</option>
+                                    <option value="en.lucene">en.lucene</option>
+                                    <option value="keyword">keyword</option>
+                                    <option value="simple">simple</option>
+                                    <option value="whitespace">whitespace</option>
+                                </select>
+                            }
+                        </td>
+                        <td class="cidx-td cidx-td-dim">
+                            @if (field.Type == "Collection(Edm.Single)")
+                            {
+                                <input type="number" class="cidx-dim-input" value="@field.Dimensions"
+                                       @onchange="e => field.Dimensions = int.TryParse(e.Value?.ToString(), out var d) ? d : null" />
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @* ── Error ── *@
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <div class="cidx-error">@_error</div>
+    }
+
+    @* ── Bottom bar ── *@
+    <div class="cidx-footer">
+        <button class="cidx-btn-create" @onclick="CreateAsync" disabled="@_creating">
+            @(_creating ? "Creating..." : "Create")
+        </button>
+        <button class="cidx-btn-cancel" @onclick='() => Navigation.NavigateTo("/indexes")'>Cancel</button>
+    </div>
+</div>
+
+@* ── Add Field Flyout ── *@
+@if (_showFlyout)
+{
+    <div class="cidx-flyout-backdrop" @onclick="CloseFlyout"></div>
+    <div class="cidx-flyout">
+        <div class="cidx-flyout-header">
+            <h2 class="cidx-flyout-title">Index Field</h2>
+            <button class="cidx-flyout-close" @onclick="CloseFlyout">✕</button>
+        </div>
+
+        <div class="cidx-flyout-body">
+            <div class="cidx-flyout-field">
+                <label class="cidx-flyout-label">Field name *</label>
+                <input class="cidx-flyout-input" @bind="_newFieldName" placeholder="" />
+            </div>
+
+            <div class="cidx-flyout-field">
+                <label class="cidx-flyout-label">Type <span class="cidx-info">ⓘ</span></label>
+                <select class="cidx-flyout-select" @bind="_newFieldType">
+                    @foreach (var t in _edmTypes)
+                    {
+                        <option value="@t">@t</option>
+                    }
+                </select>
+            </div>
+
+            <div class="cidx-flyout-section">
+                <h3 class="cidx-flyout-section-title">Configure attributes</h3>
+
+                <label class="cidx-flyout-checkbox">
+                    <input type="checkbox" @bind="_newRetrievable" /> Retrievable
+                </label>
+                <label class="cidx-flyout-checkbox">
+                    <input type="checkbox" @bind="_newFilterable" /> Filterable
+                </label>
+                <label class="cidx-flyout-checkbox">
+                    <input type="checkbox" @bind="_newSortable" /> Sortable
+                </label>
+                <label class="cidx-flyout-checkbox">
+                    <input type="checkbox" @bind="_newFacetable" /> Facetable
+                </label>
+                <label class="cidx-flyout-checkbox">
+                    <input type="checkbox" @bind="_newSearchable" /> Searchable
+                </label>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_flyoutError))
+            {
+                <div class="cidx-error" style="margin-top:8px;">@_flyoutError</div>
+            }
+        </div>
+
+        <div class="cidx-flyout-footer">
+            <button class="cidx-btn-save" @onclick="SaveField">Save</button>
+            <button class="cidx-btn-cancel" @onclick="CloseFlyout">Cancel</button>
+        </div>
+    </div>
+}
+
+@code {
+    // ── Fields state ──
+    private List<FieldEntry> _fields = new()
+    {
+        new FieldEntry
+        {
+            Name = "id", Type = "Edm.String", Key = true,
+            Retrievable = true, Filterable = false, Sortable = false,
+            Facetable = false, Searchable = false
+        }
+    };
+
+    private string _indexName = "";
+    private string _fieldSearch = "";
+    private int? _selectedFieldIndex;
+    private string? _error;
+    private bool _creating;
+
+    // ── Flyout state ──
+    private bool _showFlyout;
+    private string _newFieldName = "";
+    private string _newFieldType = "Edm.String";
+    private bool _newRetrievable;
+    private bool _newFilterable;
+    private bool _newSortable;
+    private bool _newFacetable;
+    private bool _newSearchable;
+    private string? _flyoutError;
+
+    private static readonly string[] _edmTypes =
+    [
+        "Edm.String",
+        "Edm.Int32",
+        "Edm.Int64",
+        "Edm.Double",
+        "Edm.Boolean",
+        "Edm.DateTimeOffset",
+        "Edm.GeographyPoint",
+        "Edm.ComplexType",
+        "Collection(Edm.String)",
+        "Collection(Edm.Int32)",
+        "Collection(Edm.Single)"
+    ];
+
+    // ── Flyout methods ──
+    private void OpenAddField()
+    {
+        _newFieldName = "";
+        _newFieldType = "Edm.String";
+        _newRetrievable = false;
+        _newFilterable = false;
+        _newSortable = false;
+        _newFacetable = false;
+        _newSearchable = false;
+        _flyoutError = null;
+        _showFlyout = true;
+    }
+
+    private void CloseFlyout() => _showFlyout = false;
+
+    private void SaveField()
+    {
+        _flyoutError = null;
+
+        if (string.IsNullOrWhiteSpace(_newFieldName))
+        {
+            _flyoutError = "Field name is required.";
+            return;
+        }
+
+        if (_fields.Any(f => f.Name.Equals(_newFieldName.Trim(), StringComparison.OrdinalIgnoreCase)))
+        {
+            _flyoutError = $"A field named '{_newFieldName.Trim()}' already exists.";
+            return;
+        }
+
+        _fields.Add(new FieldEntry
+        {
+            Name = _newFieldName.Trim(),
+            Type = _newFieldType,
+            Key = false,
+            Retrievable = _newRetrievable,
+            Filterable = _newFilterable,
+            Sortable = _newSortable,
+            Facetable = _newFacetable,
+            Searchable = _newSearchable
+        });
+
+        _showFlyout = false;
+    }
+
+    // ── Table helpers ──
+    private IEnumerable<(FieldEntry Field, int Index)> FilteredFields()
+    {
+        for (int i = 0; i < _fields.Count; i++)
+        {
+            if (!string.IsNullOrWhiteSpace(_fieldSearch)
+                && !_fields[i].Name.Contains(_fieldSearch, StringComparison.OrdinalIgnoreCase))
+                continue;
+            yield return (_fields[i], i);
+        }
+    }
+
+    private bool AllChecked(Func<FieldEntry, bool?> selector)
+        => _fields.All(f => selector(f) == true);
+
+    private void ToggleAll(ChangeEventArgs e, Action<FieldEntry, bool> setter)
+    {
+        var val = (bool)(e.Value ?? false);
+        foreach (var f in _fields)
+        {
+            // Don't change retrievable on the key field
+            if (f.Key && setter.Method.Name.Contains("Retrievable")) continue;
+            setter(f, val);
+        }
+    }
+
+    private void DeleteSelectedField()
+    {
+        if (_selectedFieldIndex is int idx && idx > 0 && idx < _fields.Count)
+        {
+            _fields.RemoveAt(idx);
+            _selectedFieldIndex = null;
+        }
+    }
+
+    private string ShortType(string type) =>
+        type.Replace("Edm.", "").Replace("Collection(", "Collection(Edm.");
+
+    private bool IsSearchableType(string type) =>
+        type is "Edm.String" or "Collection(Edm.String)";
+
+    // ── Create ──
+    private async Task CreateAsync()
+    {
+        _error = null;
+
+        if (string.IsNullOrWhiteSpace(_indexName))
+        {
+            _error = "Index name is required.";
+            return;
+        }
+
+        _creating = true;
+        StateHasChanged();
+
+        try
+        {
+            var index = new
+            {
+                name = _indexName.Trim(),
+                fields = _fields.Select(f => BuildFieldJson(f)).ToList()
+            };
+
+            var json = JsonSerializer.Serialize(index, new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+
+            var success = await ApiClient.CreateIndexAsync(json);
+            if (success)
+            {
+                Navigation.NavigateTo($"/indexes/{_indexName.Trim()}");
+            }
+            else
+            {
+                _error = "Failed to create index. Check the configuration and try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = $"Error creating index: {ex.Message}";
+        }
+        finally
+        {
+            _creating = false;
+        }
+    }
+
+    private object BuildFieldJson(FieldEntry f)
+    {
+        var dict = new Dictionary<string, object?>
+        {
+            ["name"] = f.Name,
+            ["type"] = f.Type,
+            ["key"] = f.Key,
+            ["retrievable"] = f.Retrievable ?? false,
+            ["searchable"] = f.Searchable ?? false,
+            ["filterable"] = f.Filterable ?? false,
+            ["sortable"] = f.Sortable ?? false,
+            ["facetable"] = f.Facetable ?? false
+        };
+
+        if (!string.IsNullOrWhiteSpace(f.Analyzer))
+            dict["analyzer"] = f.Analyzer;
+
+        if (f.Dimensions.HasValue)
+            dict["dimensions"] = f.Dimensions.Value;
+
+        return dict;
+    }
+
+    // ── Local model ──
+    private class FieldEntry
+    {
+        public string Name { get; set; } = "";
+        public string Type { get; set; } = "Edm.String";
+        public bool Key { get; set; }
+        public bool? Retrievable { get; set; }
+        public bool? Filterable { get; set; }
+        public bool? Sortable { get; set; }
+        public bool? Facetable { get; set; }
+        public bool? Searchable { get; set; }
+        public string? Analyzer { get; set; }
+        public int? Dimensions { get; set; }
+    }
+}
