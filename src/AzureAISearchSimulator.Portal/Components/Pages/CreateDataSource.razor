@@ -40,7 +40,7 @@
             <h3 class="cds-section-title">Connection</h3>
 
             <div class="cds-field">
-                <label class="cds-label">Connection string *</label>
+                <label class="cds-label">@ConnectionStringLabel *</label>
                 <input class="cds-input cds-input-wide" @bind="_connectionString"
                        placeholder="@ConnectionStringPlaceholder" />
                 <span class="cds-hint">@ConnectionStringHint</span>
@@ -49,19 +49,20 @@
 
         @* ── Container section ── *@
         <div class="cds-section">
-            <h3 class="cds-section-title">Container</h3>
+            <h3 class="cds-section-title">@ContainerSectionTitle</h3>
 
             <div class="cds-field">
-                <label class="cds-label">Container name *</label>
+                <label class="cds-label">@ContainerNameLabel *</label>
                 <input class="cds-input" @bind="_containerName"
                        placeholder="@ContainerNamePlaceholder" />
+                <span class="cds-hint">@ContainerNameHint</span>
             </div>
 
             <div class="cds-field">
-                <label class="cds-label">Query</label>
+                <label class="cds-label">@QueryLabel</label>
                 <input class="cds-input" @bind="_containerQuery"
                        placeholder="@QueryPlaceholder" />
-                <span class="cds-hint">Optional filter or subfolder path</span>
+                <span class="cds-hint">@QueryHint</span>
             </div>
         </div>
 
@@ -122,36 +123,82 @@
     private string? _error;
     private bool _creating;
 
-    // Dynamic placeholders/hints based on selected type
+    // ── Dynamic labels, placeholders, and hints based on selected type ──
+
+    private string ConnectionStringLabel => _type switch
+    {
+        "filesystem" => "Path",
+        _ => "Connection string"
+    };
+
     private string ConnectionStringPlaceholder => _type switch
     {
-        "filesystem" => @"C:\data\documents",
-        "azureblob" => "DefaultEndpointsProtocol=https;AccountName=...;AccountKey=...;EndpointSuffix=core.windows.net",
-        "adlsgen2" => "DefaultEndpointsProtocol=https;AccountName=...;AccountKey=...;EndpointSuffix=core.windows.net",
+        "filesystem" => "./data/hotels",
+        "azureblob" => "DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=...;EndpointSuffix=core.windows.net",
+        "adlsgen2" => "DefaultEndpointsProtocol=https;AccountName=mydatalake;AccountKey=...;EndpointSuffix=core.windows.net",
         _ => "Enter connection string"
     };
 
     private string ConnectionStringHint => _type switch
     {
-        "filesystem" => "Local file system path (e.g. C:/data or ./data/hotels)",
-        "azureblob" => "Azure Blob Storage connection string, SAS URL, or managed identity endpoint",
-        "adlsgen2" => "ADLS Gen2 connection string, SAS URL, or DFS managed identity endpoint",
+        "filesystem" => "Local file system path — absolute (C:/data) or relative (./data/hotels). Supports path= prefix.",
+        "azureblob" => "Azure Blob Storage connection string, SAS URL, or managed identity endpoint (https://myaccount.blob.core.windows.net)",
+        "adlsgen2" => "ADLS Gen2 connection string, SAS URL, or DFS managed identity endpoint (https://mydatalake.dfs.core.windows.net)",
         _ => ""
+    };
+
+    private string ContainerSectionTitle => _type switch
+    {
+        "filesystem" => "Folder",
+        "adlsgen2" => "File system",
+        _ => "Container"
+    };
+
+    private string ContainerNameLabel => _type switch
+    {
+        "filesystem" => "Subfolder name",
+        "azureblob" => "Container name",
+        "adlsgen2" => "File system name",
+        _ => "Container name"
     };
 
     private string ContainerNamePlaceholder => _type switch
     {
-        "filesystem" => "subfolder",
+        "filesystem" => ".",
         "azureblob" => "documents",
         "adlsgen2" => "filesystem1",
         _ => "container"
     };
 
+    private string ContainerNameHint => _type switch
+    {
+        "filesystem" => "Subfolder appended to path. Use \".\" to use the root path directly.",
+        "azureblob" => "Name of the blob container to read from.",
+        "adlsgen2" => "Name of the ADLS Gen2 file system (container).",
+        _ => ""
+    };
+
+    private string QueryLabel => _type switch
+    {
+        "filesystem" => "File pattern",
+        "azureblob" => "Blob prefix",
+        "adlsgen2" => "Directory path",
+        _ => "Query"
+    };
+
     private string QueryPlaceholder => _type switch
     {
-        "filesystem" => "*.txt",
+        "filesystem" => "*.pdf",
         "azureblob" => "folder1/",
         "adlsgen2" => "data/raw/",
+        _ => ""
+    };
+
+    private string QueryHint => _type switch
+    {
+        "filesystem" => "Glob pattern for file matching (e.g. *.txt, *.pdf). Default: *.*",
+        "azureblob" => "Optional blob name prefix to filter results (e.g. pdfs/)",
+        "adlsgen2" => "Optional directory path for recursive listing (e.g. data/raw/)",
         _ => ""
     };
 
